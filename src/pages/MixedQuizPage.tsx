@@ -2,18 +2,18 @@
 import React from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import DashboardOverview from '@/components/DashboardOverview';
+import MixedQuiz from '@/components/MixedQuiz';
 
-const Index = () => {
+const MixedQuizPage = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-grow">
-        <DashboardOverview />
+        <MixedQuiz />
       </main>
       <Footer />
     </div>
   );
 };
 
-export default Index;
+export default MixedQuizPage;

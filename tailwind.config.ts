@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,24 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Custom conservation-themed colors
+				conservation: {
+					green: {
+						light: '#81C784',
+						DEFAULT: '#4CAF50',
+						dark: '#2E7D32'
+					},
+					earth: {
+						light: '#A1887F',
+						DEFAULT: '#8D6E63',
+						dark: '#6D4C41'
+					},
+					water: {
+						light: '#90CAF9',
+						DEFAULT: '#42A5F5',
+						dark: '#1976D2'
+					},
 				}
 			},
 			borderRadius: {
@@ -84,11 +103,16 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'fade-in': {
+					'0%': { opacity: '0' },
+					'100%': { opacity: '1' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'fade-in': 'fade-in 0.5s ease-out'
 			}
 		}
 	},
