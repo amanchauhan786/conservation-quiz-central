@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Linkedin, Github } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -13,6 +14,24 @@ const Footer = () => {
           <div className="text-center md:text-right">
             <p className="text-sm opacity-75">Developed by Aman Chauhan</p>
             <p className="text-sm opacity-75">© {new Date().getFullYear()} All Rights Reserved</p>
+            <div className="flex justify-center md:justify-end space-x-4 mt-2">
+              <a 
+                href="https://www.linkedin.com/in/aman-chauhan-128552256" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="hover:text-blue-300 transition-colors"
+              >
+                <Linkedin size={24} />
+              </a>
+              <a 
+                href="https://github.com/amanchauhan786" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="hover:text-gray-300 transition-colors"
+              >
+                <Github size={24} />
+              </a>
+            </div>
           </div>
         </div>
       </div>
