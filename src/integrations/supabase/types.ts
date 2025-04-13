@@ -9,7 +9,98 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      incorrect_answers: {
+        Row: {
+          attempt_id: string
+          correct_answer: string
+          created_at: string
+          id: string
+          question_text: string
+          user_answer: string
+          user_id: string
+          week_id: number
+        }
+        Insert: {
+          attempt_id: string
+          correct_answer: string
+          created_at?: string
+          id?: string
+          question_text: string
+          user_answer: string
+          user_id: string
+          week_id: number
+        }
+        Update: {
+          attempt_id?: string
+          correct_answer?: string
+          created_at?: string
+          id?: string
+          question_text?: string
+          user_answer?: string
+          user_id?: string
+          week_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incorrect_answers_attempt_id_fkey"
+            columns: ["attempt_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_attempts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      quiz_attempts: {
+        Row: {
+          created_at: string
+          id: string
+          quiz_type: string
+          score: number
+          total_questions: number
+          user_id: string
+          week_id: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          quiz_type: string
+          score: number
+          total_questions: number
+          user_id: string
+          week_id?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          quiz_type?: string
+          score?: number
+          total_questions?: number
+          user_id?: string
+          week_id?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

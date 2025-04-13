@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +7,9 @@ import { ArrowLeft, ArrowRight, CheckCircle, RefreshCcw, Settings } from 'lucide
 import { getAllQuestions } from '@/data/weekData';
 import QuizOption from './QuizOption';
 import { Slider } from "@/components/ui/slider";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from './AuthProvider';
+import { useToast } from '@/hooks/use-toast';
 
 const MixedQuiz = () => {
   const [quizStarted, setQuizStarted] = useState(false);
@@ -18,6 +20,15 @@ const MixedQuiz = () => {
   const [score, setScore] = useState(0);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [questionCount, setQuestionCount] = useState(20);
+  const [incorrectAnswers, setIncorrectAnswers] = useState<Array<{
+    question: string;
+    correctAnswer: string;
+    userAnswer: string;
+    weekId: number;
+  }>>([]);
+  
+  const { user } = useAuth();
+  const { toast } = useToast();
   
   const totalQuestions = questionCount;
   const progress = quizStarted ? ((currentQuestionIndex + 1) / totalQuestions) * 100 : 0;
@@ -46,6 +57,7 @@ const MixedQuiz = () => {
     setSelectedOption(null);
     setIsChecking(false);
     setQuizCompleted(false);
+    setIncorrectAnswers([]);
   };
   
   const handleOptionSelect = (option: string) => {
@@ -60,6 +72,14 @@ const MixedQuiz = () => {
     
     if (selectedOption === currentQuestion.correctAnswer) {
       setScore(score + 1);
+    } else {
+      // Record incorrect answer
+      setIncorrectAnswers([...incorrectAnswers, {
+        question: currentQuestion.text,
+        correctAnswer: currentQuestion.correctAnswer,
+        userAnswer: selectedOption,
+        weekId: currentQuestion.weekId
+      }]);
     }
   };
   
@@ -68,12 +88,64 @@ const MixedQuiz = () => {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else {
       setQuizCompleted(true);
+      saveQuizResults();
     }
   };
   
   const handlePrevQuestion = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
+    }
+  };
+  
+  const saveQuizResults = async () => {
+    if (!user) return;
+    
+    try {
+      // Save quiz attempt
+      const { data: attemptData, error: attemptError } = await supabase
+        .from('quiz_attempts')
+        .insert({
+          user_id: user.id,
+          quiz_type: 'mixed',
+          week_id: null, // mixed quiz doesn't have a specific week
+          score: score,
+          total_questions: totalQuestions
+        })
+        .select();
+      
+      if (attemptError) throw attemptError;
+      
+      // Save incorrect answers if any
+      if (incorrectAnswers.length > 0 && attemptData && attemptData[0]) {
+        const incorrectAnswersToSave = incorrectAnswers.map(item => ({
+          attempt_id: attemptData[0].id,
+          user_id: user.id,
+          week_id: item.weekId,
+          question_text: item.question,
+          correct_answer: item.correctAnswer,
+          user_answer: item.userAnswer
+        }));
+        
+        const { error: incorrectError } = await supabase
+          .from('incorrect_answers')
+          .insert(incorrectAnswersToSave);
+        
+        if (incorrectError) throw incorrectError;
+      }
+      
+      toast({
+        title: "Progress saved",
+        description: "Your quiz results have been saved to your profile.",
+      });
+      
+    } catch (error: any) {
+      console.error('Error saving quiz results:', error);
+      toast({
+        title: "Error saving progress",
+        description: "There was an error saving your quiz results.",
+        variant: "destructive"
+      });
     }
   };
   
@@ -167,6 +239,21 @@ const MixedQuiz = () => {
                     "Good job! Keep studying to improve your score." : 
                     "Keep practicing. Review the course content and try again."}
               </p>
+              
+              {incorrectAnswers.length > 0 && (
+                <div className="w-full mt-6">
+                  <h3 className="text-lg font-medium mb-4">Questions to Review:</h3>
+                  <div className="space-y-4">
+                    {incorrectAnswers.map((item, index) => (
+                      <div key={index} className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                        <p className="font-medium">{item.question}</p>
+                        <p className="text-sm mt-2">Your answer: <span className="text-red-600 dark:text-red-400">{item.userAnswer}</span></p>
+                        <p className="text-sm">Correct answer: <span className="text-green-600 dark:text-green-400">{item.correctAnswer}</span></p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
           <CardFooter className="flex justify-between">
