@@ -1,13 +1,128 @@
 
 import React from 'react';
-import { Award, Clock, Book } from 'lucide-react';
+import { Award, Clock, Book, BarChart2, CheckCircle, Activity } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from 'react-router-dom';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ChartContainer } from "@/components/ui/chart";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+
+const mockProgressData = [
+  { week: 'Week 1', score: 90 },
+  { week: 'Week 2', score: 85 },
+  { week: 'Week 3', score: 78 },
+  { week: 'Week 4', score: 92 },
+  { week: 'Week 5', score: 88 },
+  { week: 'Week 6', score: 76 },
+];
 
 const DashboardOverview = () => {
   return (
     <div className="nptel-container py-8">
-      <h1 className="text-3xl font-bold mb-6">Course Overview</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Course Dashboard</h1>
+        <div className="text-sm text-muted-foreground">
+          <span className="font-medium">Course:</span> Conservation Economics | <span className="font-medium">Creator:</span> Aman Chauhan
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <Card className="bg-gradient-to-br from-conservation-green/10 to-conservation-green/5">
+          <CardContent className="flex flex-col items-center pt-6">
+            <Book className="h-10 w-10 mb-2 text-conservation-green" />
+            <h3 className="text-xl font-semibold">12 Weeks</h3>
+            <p className="text-sm text-muted-foreground">Comprehensive Learning</p>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-conservation-earth/10 to-conservation-earth/5">
+          <CardContent className="flex flex-col items-center pt-6">
+            <Award className="h-10 w-10 mb-2 text-conservation-earth" />
+            <h3 className="text-xl font-semibold">120+ Questions</h3>
+            <p className="text-sm text-muted-foreground">Practice & Assessment</p>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-conservation-water/10 to-conservation-water/5">
+          <CardContent className="flex flex-col items-center pt-6">
+            <Activity className="h-10 w-10 mb-2 text-conservation-water" />
+            <h3 className="text-xl font-semibold">Track Progress</h3>
+            <p className="text-sm text-muted-foreground">Personalized Insights</p>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-purple-100 to-purple-50">
+          <CardContent className="flex flex-col items-center pt-6">
+            <Clock className="h-10 w-10 mb-2 text-purple-500" />
+            <h3 className="text-xl font-semibold">Self-Paced</h3>
+            <p className="text-sm text-muted-foreground">Learn At Your Pace</p>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart2 className="h-5 w-5" />
+              Weekly Performance
+            </CardTitle>
+            <CardDescription>Your progress across weekly quizzes</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={mockProgressData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="week" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="score" name="Score (%)" fill="#34D399" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5" />
+              Recent Activity
+            </CardTitle>
+            <CardDescription>Your latest quiz attempts</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Quiz</TableHead>
+                  <TableHead>Score</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell>Week 11</TableCell>
+                  <TableCell>9/10</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Week 10</TableCell>
+                  <TableCell>8/10</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Mixed Quiz</TableCell>
+                  <TableCell>17/20</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Week 9</TableCell>
+                  <TableCell>10/10</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
       
       <div className="bg-white dark:bg-card rounded-lg shadow-md p-6 mb-8 animate-fade-in">
         <h2 className="text-2xl font-semibold mb-4">Conservation Economics</h2>
@@ -20,27 +135,9 @@ const DashboardOverview = () => {
           environment by putting profits above everything, and how we can solve these issues of Conventional Economics with a 
           better understanding of Economics – Green Economics.
         </p>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-          <div className="stat-card">
-            <Book className="h-8 w-8 mb-2 text-conservation-green" />
-            <h3 className="text-lg font-semibold">12 Weeks</h3>
-            <p className="text-sm text-gray-500">Comprehensive Learning</p>
-          </div>
-          <div className="stat-card">
-            <Award className="h-8 w-8 mb-2 text-conservation-earth" />
-            <h3 className="text-lg font-semibold">120+ Questions</h3>
-            <p className="text-sm text-gray-500">Practice & Assessment</p>
-          </div>
-          <div className="stat-card">
-            <Clock className="h-8 w-8 mb-2 text-conservation-water" />
-            <h3 className="text-lg font-semibold">Self-Paced</h3>
-            <p className="text-sm text-gray-500">Learn At Your Pace</p>
-          </div>
-        </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="bg-conservation-green/10">
             <CardTitle>Weekly Learning</CardTitle>

@@ -4,26 +4,32 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ArrowRight, CheckCircle, RefreshCcw } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, RefreshCcw, Settings } from 'lucide-react';
 import { getAllQuestions } from '@/data/weekData';
 import QuizOption from './QuizOption';
+import { Slider } from "@/components/ui/slider";
 
 const MixedQuiz = () => {
+  const [quizStarted, setQuizStarted] = useState(false);
   const [questions, setQuestions] = useState(getAllQuestions().filter(q => q.options.length > 0));
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [score, setScore] = useState(0);
   const [quizCompleted, setQuizCompleted] = useState(false);
+  const [questionCount, setQuestionCount] = useState(20);
   
-  const totalQuestions = 20; // Limit to 20 questions for the mixed quiz
-  const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
+  const totalQuestions = questionCount;
+  const progress = quizStarted ? ((currentQuestionIndex + 1) / totalQuestions) * 100 : 0;
   
   useEffect(() => {
-    // Shuffle questions and take only the first totalQuestions
-    const shuffled = [...questions].sort(() => 0.5 - Math.random());
-    setQuestions(shuffled.slice(0, totalQuestions));
-  }, []);
+    if (quizStarted) {
+      // Shuffle questions and take only the first totalQuestions
+      const shuffled = [...getAllQuestions().filter(q => q.options.length > 0)]
+        .sort(() => 0.5 - Math.random());
+      setQuestions(shuffled.slice(0, totalQuestions));
+    }
+  }, [quizStarted, totalQuestions]);
   
   useEffect(() => {
     // Reset state when moving to new question
@@ -33,13 +39,14 @@ const MixedQuiz = () => {
   
   const currentQuestion = questions[currentQuestionIndex];
   
-  if (!currentQuestion) {
-    return (
-      <div className="nptel-container py-8 text-center">
-        <h2 className="text-2xl font-bold mb-4">Loading quiz questions...</h2>
-      </div>
-    );
-  }
+  const handleStartQuiz = () => {
+    setQuizStarted(true);
+    setCurrentQuestionIndex(0);
+    setScore(0);
+    setSelectedOption(null);
+    setIsChecking(false);
+    setQuizCompleted(false);
+  };
   
   const handleOptionSelect = (option: string) => {
     if (isChecking) return;
@@ -71,18 +78,75 @@ const MixedQuiz = () => {
   };
   
   const restartQuiz = () => {
-    // Reshuffle questions for a new quiz
-    const shuffled = [...getAllQuestions().filter(q => q.options.length > 0)]
-      .sort(() => 0.5 - Math.random())
-      .slice(0, totalQuestions);
-    
-    setQuestions(shuffled);
-    setCurrentQuestionIndex(0);
-    setSelectedOption(null);
-    setIsChecking(false);
-    setScore(0);
-    setQuizCompleted(false);
+    setQuizStarted(false);
   };
+  
+  if (!quizStarted) {
+    return (
+      <div className="nptel-container py-8">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Mixed Quiz Setup</h1>
+          <Button asChild variant="outline">
+            <Link to="/quiz/weekly">Back to Quizzes</Link>
+          </Button>
+        </div>
+        
+        <Card className="max-w-3xl mx-auto">
+          <CardHeader className="bg-conservation-water/10">
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Configure Your Quiz
+            </CardTitle>
+            <CardDescription>Select the number of questions for your mixed quiz</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="mb-6">
+              <label className="block text-sm font-medium mb-2">
+                Number of Questions: {questionCount}
+              </label>
+              <div className="px-4">
+                <Slider
+                  value={[questionCount]}
+                  min={5}
+                  max={50}
+                  step={5}
+                  onValueChange={(value) => setQuestionCount(value[0])}
+                />
+              </div>
+              <div className="flex justify-between text-sm text-muted-foreground mt-2">
+                <span>5</span>
+                <span>25</span>
+                <span>50</span>
+              </div>
+            </div>
+            
+            <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg mb-6">
+              <p className="text-sm">
+                This quiz will randomly select {questionCount} questions from all available weeks.
+                Your progress will be saved and available in your personalized dashboard.
+              </p>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button 
+              onClick={handleStartQuiz} 
+              className="w-full"
+            >
+              Start Quiz
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+  
+  if (!currentQuestion) {
+    return (
+      <div className="nptel-container py-8 text-center">
+        <h2 className="text-2xl font-bold mb-4">Loading quiz questions...</h2>
+      </div>
+    );
+  }
   
   if (quizCompleted) {
     return (
@@ -125,7 +189,7 @@ const MixedQuiz = () => {
   return (
     <div className="nptel-container py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Mixed Quiz</h1>
+        <h1 className="text-2xl font-bold">Mixed Quiz ({questionCount} Questions)</h1>
         <Button asChild variant="outline">
           <Link to="/quiz/weekly">Back to Quizzes</Link>
         </Button>
