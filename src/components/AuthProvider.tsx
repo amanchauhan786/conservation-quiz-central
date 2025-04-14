@@ -2,7 +2,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from 'react-router-dom';
 
 type AuthContextType = {
   session: Session | null;
@@ -24,21 +23,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
   useEffect(() => {
-    // Handle redirect from OAuth providers
-    const handleHashRedirect = () => {
-      const hash = window.location.hash;
-      if (hash && hash.includes('access_token')) {
-        // Remove the hash fragment and redirect to home page
-        setTimeout(() => {
-          // Using navigate in a setTimeout to allow auth state to update first
-          navigate('/', { replace: true });
-        }, 500);
-      }
-    };
-
     // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -46,13 +32,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
-        
-        // If the user just signed in, redirect to home page
-        if (event === 'SIGNED_IN') {
-          setTimeout(() => {
-            navigate('/', { replace: true });
-          }, 500);
-        }
       }
     );
 
@@ -64,17 +43,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
     });
 
-    // Call this function to handle OAuth redirects
-    handleHashRedirect();
-
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, []);
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    navigate('/', { replace: true });
   };
 
   const value = {

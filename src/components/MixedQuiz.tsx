@@ -55,8 +55,7 @@ const MixedQuiz = () => {
     const allQuestions: Question[] = [];
     
     weeks.forEach(week => {
-      // Check if week.content has a questions property
-      const weekQuestions = week.content.quiz.map(q => ({
+      const weekQuestions = week.content.questions.map(q => ({
         ...q,
         week_id: week.id // Add the week_id to each question
       }));
@@ -92,6 +91,7 @@ const MixedQuiz = () => {
       toast({
         title: "Correct!",
         description: `That's the right answer.`,
+        variant: "success",
       });
     } else {
       // Track incorrect answer
@@ -109,16 +109,12 @@ const MixedQuiz = () => {
       // Save incorrect answer to Supabase if user is logged in
       if (user) {
         try {
-          // Generate a UUID for attempt_id
-          const attemptId = crypto.randomUUID();
-          
           await supabase.from('incorrect_answers').insert({
             user_id: user.id,
             week_id: currentQuestion.week_id,
             question_text: currentQuestion.text,
             user_answer: selectedOption,
-            correct_answer: currentQuestion.correctAnswer,
-            attempt_id: attemptId
+            correct_answer: currentQuestion.correctAnswer
           });
         } catch (error) {
           console.error("Error saving incorrect answer:", error);
@@ -277,8 +273,8 @@ const MixedQuiz = () => {
               key={index}
               option={option}
               selected={selectedOption === option}
-              isCorrect={isAnswered ? option === currentQuestion.correctAnswer : undefined}
-              isIncorrect={isAnswered ? (selectedOption === option && option !== currentQuestion.correctAnswer) : undefined}
+              correct={isAnswered ? option === currentQuestion.correctAnswer : undefined}
+              incorrect={isAnswered ? (selectedOption === option && option !== currentQuestion.correctAnswer) : undefined}
               disabled={isAnswered}
               onSelect={() => handleOptionSelect(option)}
             />

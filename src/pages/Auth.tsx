@@ -36,7 +36,7 @@ const Auth = () => {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/`, // Ensure proper redirect URL with trailing slash
+          emailRedirectTo: window.location.origin, // Ensure proper redirect URL
         }
       });
       
@@ -86,7 +86,7 @@ const Auth = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`, // Make sure the redirect URL has trailing slash
+          redirectTo: `${window.location.origin}/`, // Make sure the redirect URL is correct
         },
       });
       

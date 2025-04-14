@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from './AuthProvider';
 import { Button } from "@/components/ui/button";
@@ -86,10 +87,10 @@ const IncorrectAnswersHistory = () => {
       <CardHeader className="bg-red-100 dark:bg-red-900/20">
         <CardTitle className="flex items-center gap-2">
           <AlertCircle className="h-5 w-5 text-red-500" />
-          Areas to Review
+          Areas to Improve
         </CardTitle>
         <CardDescription>
-          Questions you need to review, based on your quiz history
+          Questions you've answered incorrectly multiple times
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-6">
@@ -107,19 +108,32 @@ const IncorrectAnswersHistory = () => {
               <label className="block text-sm font-medium mb-2">
                 Filter by week:
               </label>
-              <Select value={selectedWeek} onValueChange={setSelectedWeek}>
-                <SelectTrigger className="w-full md:w-64">
-                  <SelectValue placeholder="Select a week" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Weeks</SelectItem>
-                  {uniqueWeeks.map((weekId) => (
-                    <SelectItem key={weekId} value={weekId.toString()}>
-                      Week {weekId}: {weeks.find(w => w.id === weekId)?.title || ''}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {isMobile ? (
+                <Select value={selectedWeek} onValueChange={setSelectedWeek}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a week" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Weeks</SelectItem>
+                    {uniqueWeeks.map((weekId) => (
+                      <SelectItem key={weekId} value={weekId.toString()}>
+                        Week {weekId}: {weeks.find(w => w.id === weekId)?.title || ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Tabs value={selectedWeek} onValueChange={setSelectedWeek} className="w-full">
+                  <TabsList className="w-full flex flex-wrap mb-4">
+                    <TabsTrigger value="all">All Weeks</TabsTrigger>
+                    {uniqueWeeks.map((weekId) => (
+                      <TabsTrigger key={weekId} value={weekId.toString()}>
+                        Week {weekId}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </Tabs>
+              )}
             </div>
             
             <div className="space-y-4">
@@ -128,11 +142,11 @@ const IncorrectAnswersHistory = () => {
                   key={index} 
                   className="p-4 bg-red-50 dark:bg-red-900/10 rounded-lg border border-red-100 dark:border-red-900/20"
                 >
-                  <div className="flex flex-col sm:flex-row sm:justify-between mb-2">
-                    <span className="text-xs font-medium text-red-600 mb-1 sm:mb-0">
+                  <div className="flex justify-between mb-2">
+                    <span className="text-xs font-medium text-red-600">
                       Week {item.week_id} • Missed {item.count} times
                     </span>
-                    <Button variant="link" size="sm" asChild className="p-0 h-auto sm:ml-2 self-start">
+                    <Button variant="link" size="sm" asChild className="p-0 h-auto">
                       <Link to={`/learn`} className="text-xs flex items-center gap-1">
                         <BookOpen className="h-3 w-3" />
                         Review
