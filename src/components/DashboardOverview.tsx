@@ -1,12 +1,19 @@
+
 import React, { useEffect, useState } from 'react';
-import { Award, Book, BarChart2, CheckCircle, Activity, AlertCircle, Users } from 'lucide-react';
+import { Award, Book, BarChart2, CheckCircle, Activity, AlertCircle, Users, BookOpen } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthProvider';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { weeks } from '@/data/weekData';
+import { useIsMobile } from '@/hooks/use-mobile';
+
+// Import the IncorrectAnswersHistory component
+import IncorrectAnswersHistory from '@/components/IncorrectAnswersHistory';
 
 const DashboardOverview = () => {
   const { user } = useAuth();
@@ -15,6 +22,8 @@ const DashboardOverview = () => {
   const [weakAreas, setWeakAreas] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [visitorCount, setVisitorCount] = useState(0);
+  const [weeklyQuizData, setWeeklyQuizData] = useState<any[]>([]);
+  const isMobile = useIsMobile();
 
   // Track page visit when component mounts
   useEffect(() => {
@@ -103,13 +112,30 @@ const DashboardOverview = () => {
         // Fetch weak areas (most frequently incorrect answers)
         const { data: incorrectData, error: incorrectError } = await supabase
           .from('incorrect_answers')
-          .select('week_id, question_text, correct_answer, count(*)')
+          .select('week_id, question_text, correct_answer')
           .eq('user_id', user.id)
-          .order('count', { ascending: false })
+          .order('created_at', { ascending: false })
           .limit(3);
         
         if (incorrectError) throw incorrectError;
         setWeakAreas(incorrectData || []);
+        
+        // Get quiz data for pie chart
+        const { data: quizTypes, error: quizTypesError } = await supabase
+          .from('quiz_attempts')
+          .select('quiz_type, count(*)')
+          .eq('user_id', user.id)
+          .group('quiz_type');
+        
+        if (quizTypesError) throw quizTypesError;
+        
+        // Create pie chart data
+        const pieData = quizTypes?.map(item => ({
+          name: item.quiz_type === 'weekly' ? 'Weekly Quizzes' : 'Mixed Quizzes',
+          value: item.count,
+        })) || [];
+        
+        setWeeklyQuizData(pieData);
         
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -120,6 +146,9 @@ const DashboardOverview = () => {
     
     fetchUserData();
   }, [user]);
+
+  // COLORS for pie chart
+  const COLORS = ['#34D399', '#60A5FA', '#F97316', '#8B5CF6'];
 
   const renderDashboard = () => {
     if (!user) {
@@ -246,39 +275,141 @@ const DashboardOverview = () => {
           </Card>
         </div>
         
-        {weakAreas.length > 0 && (
-          <Card className="mb-8">
+        {/* Second row of charts/stats */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Quiz Distribution
+              </CardTitle>
+              <CardDescription>Types of quizzes you've taken</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {weeklyQuizData.length > 0 ? (
+                <div className="h-[250px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={weeklyQuizData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      >
+                        {weeklyQuizData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-[250px] text-center">
+                  <p className="text-muted-foreground mb-4">Take quizzes to see your distribution data.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          
+          <Card className="lg:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <AlertCircle className="h-5 w-5" />
                 Areas to Improve
               </CardTitle>
-              <CardDescription>Questions you've struggled with most frequently</CardDescription>
+              <CardDescription>Questions you've struggled with recently</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {weakAreas.map((item, index) => (
-                  <div key={index} className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
-                    <div className="flex justify-between mb-2">
-                      <span className="font-medium">Week {item.week_id}</span>
-                      <span className="text-sm text-muted-foreground">Missed {item.count} times</span>
+              {weakAreas.length > 0 ? (
+                <div className="space-y-4">
+                  {weakAreas.map((item, index) => (
+                    <div key={index} className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                      <div className="flex justify-between mb-2">
+                        <span className="font-medium">Week {item.week_id}</span>
+                        <Button variant="link" size="sm" asChild className="p-0 h-auto">
+                          <Link to={`/learn`} className="text-xs flex items-center gap-1">
+                            <BookOpen className="h-3 w-3" />
+                            Review
+                          </Link>
+                        </Button>
+                      </div>
+                      <p className="mb-2">{item.question_text}</p>
+                      <p className="text-sm">Correct answer: <span className="text-green-600 dark:text-green-400">{item.correct_answer}</span></p>
                     </div>
-                    <p className="mb-2">{item.question_text}</p>
-                    <p className="text-sm">Correct answer: <span className="text-green-600 dark:text-green-400">{item.correct_answer}</span></p>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <p className="text-muted-foreground">No incorrect answers recorded yet. As you take quizzes, we'll track questions you have difficulty with.</p>
+                </div>
+              )}
             </CardContent>
           </Card>
-        )}
+        </div>
+        
+        {/* Include the IncorrectAnswersHistory component here on the dashboard */}
+        {user && <IncorrectAnswersHistory />}
+        
+        <div className="bg-white dark:bg-card rounded-lg shadow-md p-6 mb-8 animate-fade-in">
+          <h2 className="text-2xl font-semibold mb-4">Conservation Economics</h2>
+          <p className="mb-4">
+            The times are changing: we live in an era when issues such as climate change, over population, pollution, habitat loss and 
+            mass extinction of species are no longer just academic concepts; we are witnessing them in our daily lives and suffering their consequences.
+          </p>
+          <p className="mb-4">
+            In this course, we shall look at the processes of Conventional Economics that have led to the destruction of the 
+            environment by putting profits above everything, and how we can solve these issues of Conventional Economics with a 
+            better understanding of Economics – Green Economics.
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card>
+            <CardHeader className="bg-conservation-green/10">
+              <CardTitle>Weekly Learning</CardTitle>
+              <CardDescription>Study materials for each week</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <p className="mb-4">Access comprehensive learning materials organized by week, including explanations of key concepts.</p>
+              <Link to="/learn" className="text-conservation-green hover:text-conservation-green-dark font-medium">Start Learning →</Link>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="bg-conservation-earth/10">
+              <CardTitle>Weekly Quizzes</CardTitle>
+              <CardDescription>Test your knowledge by week</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <p className="mb-4">Assess your understanding with topic-specific quizzes for each week of the course.</p>
+              <Link to="/quiz/weekly" className="text-conservation-earth hover:text-conservation-earth-dark font-medium">Take Weekly Quizzes →</Link>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="bg-conservation-water/10">
+              <CardTitle>Mixed Quiz</CardTitle>
+              <CardDescription>Comprehensive assessment</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <p className="mb-4">Challenge yourself with questions from all weeks combined in a comprehensive test.</p>
+              <Link to="/quiz/mixed" className="text-conservation-water hover:text-conservation-water-dark font-medium">Take Mixed Quiz →</Link>
+            </CardContent>
+          </Card>
+        </div>
       </>
     );
   };
 
   return (
     <div className="nptel-container py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Course Dashboard</h1>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+        <h1 className="text-3xl font-bold mb-2 md:mb-0">Course Dashboard</h1>
         <div className="text-sm text-muted-foreground">
           <span className="font-medium">Course:</span> Conservation Economics | <span className="font-medium">Creator:</span> Aman Chauhan
         </div>
@@ -291,54 +422,6 @@ const DashboardOverview = () => {
       ) : (
         renderDashboard()
       )}
-      
-      <div className="bg-white dark:bg-card rounded-lg shadow-md p-6 mb-8 animate-fade-in">
-        <h2 className="text-2xl font-semibold mb-4">Conservation Economics</h2>
-        <p className="mb-4">
-          The times are changing: we live in an era when issues such as climate change, over population, pollution, habitat loss and 
-          mass extinction of species are no longer just academic concepts; we are witnessing them in our daily lives and suffering their consequences.
-        </p>
-        <p className="mb-4">
-          In this course, we shall look at the processes of Conventional Economics that have led to the destruction of the 
-          environment by putting profits above everything, and how we can solve these issues of Conventional Economics with a 
-          better understanding of Economics – Green Economics.
-        </p>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="bg-conservation-green/10">
-            <CardTitle>Weekly Learning</CardTitle>
-            <CardDescription>Study materials for each week</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <p className="mb-4">Access comprehensive learning materials organized by week, including explanations of key concepts.</p>
-            <Link to="/learn" className="text-conservation-green hover:text-conservation-green-dark font-medium">Start Learning →</Link>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="bg-conservation-earth/10">
-            <CardTitle>Weekly Quizzes</CardTitle>
-            <CardDescription>Test your knowledge by week</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <p className="mb-4">Assess your understanding with topic-specific quizzes for each week of the course.</p>
-            <Link to="/quiz/weekly" className="text-conservation-earth hover:text-conservation-earth-dark font-medium">Take Weekly Quizzes →</Link>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="bg-conservation-water/10">
-            <CardTitle>Mixed Quiz</CardTitle>
-            <CardDescription>Comprehensive assessment</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <p className="mb-4">Challenge yourself with questions from all weeks combined in a comprehensive test.</p>
-            <Link to="/quiz/mixed" className="text-conservation-water hover:text-conservation-water-dark font-medium">Take Mixed Quiz →</Link>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 };
