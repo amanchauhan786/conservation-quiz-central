@@ -26,43 +26,17 @@ const IncorrectAnswersHistory = () => {
       try {
         setLoading(true);
         
-        // Using a different approach without .group() which is causing issues
         const { data, error } = await supabase
           .from('incorrect_answers')
-          .select('*')
-          .eq('user_id', user.id);
+          .select('week_id, question_text, correct_answer, count(*)')
+          .eq('user_id', user.id)
+          .order('week_id', { ascending: true })
+          .order('count', { ascending: false })
+          .group('week_id, question_text, correct_answer');
         
         if (error) throw error;
         
-        // Process the data to group by question and count occurrences
-        const groupedData = data.reduce((acc: any[], item) => {
-          const existingItem = acc.find(
-            x => x.question_text === item.question_text && x.week_id === item.week_id
-          );
-          
-          if (existingItem) {
-            existingItem.count += 1;
-          } else {
-            acc.push({
-              week_id: item.week_id,
-              question_text: item.question_text,
-              correct_answer: item.correct_answer,
-              count: 1
-            });
-          }
-          
-          return acc;
-        }, []);
-        
-        // Sort by week_id and then by count (descending)
-        const sortedData = groupedData.sort((a, b) => {
-          if (a.week_id !== b.week_id) {
-            return a.week_id - b.week_id;
-          }
-          return b.count - a.count;
-        });
-        
-        setIncorrectAnswers(sortedData);
+        setIncorrectAnswers(data || []);
       } catch (error) {
         console.error('Error fetching incorrect answers:', error);
       } finally {
