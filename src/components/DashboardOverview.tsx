@@ -1,6 +1,5 @@
-
 import React, { useEffect, useState } from 'react';
-import { Award, Clock, Book, BarChart2, CheckCircle, Activity, AlertCircle, Users } from 'lucide-react';
+import { Award, Book, BarChart2, CheckCircle, Activity, AlertCircle, Users } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -25,24 +24,23 @@ const DashboardOverview = () => {
         const { data: visitorData, error: visitorError } = await supabase
           .from('site_stats')
           .select('visitor_count')
+          .eq('id', 1)
           .single();
         
-        if (visitorError && visitorError.code !== 'PGRST116') {
+        if (visitorError) {
           console.error("Error fetching visitor count:", visitorError);
           return;
         }
         
         const currentCount = visitorData?.visitor_count || 0;
-        setVisitorCount(currentCount + 1);
+        const newCount = currentCount + 1;
+        setVisitorCount(newCount);
         
         // Update visitor count
-        const { error: updateError } = await supabase
+        await supabase
           .from('site_stats')
-          .upsert({ id: 1, visitor_count: currentCount + 1 });
-        
-        if (updateError) {
-          console.error("Error updating visitor count:", updateError);
-        }
+          .update({ visitor_count: newCount })
+          .eq('id', 1);
       } catch (error) {
         console.error("Error tracking visit:", error);
       }
