@@ -13,8 +13,10 @@ const Learn = () => {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-grow">
-        {user && <IncorrectAnswersHistory />}
-        <WeeklyLearning />
+        <div className="nptel-container">
+          {user && <IncorrectAnswersHistory />}
+          <WeeklyLearning />
+        </div>
       </main>
       <Footer />
     </div>
