@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -186,15 +187,15 @@ const WeeklyQuiz = () => {
               )}
             </div>
           </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button asChild variant="outline">
+          <CardFooter className="flex flex-col sm:flex-row justify-between gap-4">
+            <Button asChild variant="outline" className="w-full sm:w-auto">
               <Link to="/learn">Return to Learning</Link>
             </Button>
-            <Button onClick={restartQuiz} className="flex items-center space-x-2">
+            <Button onClick={restartQuiz} className="flex items-center space-x-2 w-full sm:w-auto">
               <RefreshCcw className="h-4 w-4" />
               <span>Restart Quiz</span>
             </Button>
-            <Button asChild>
+            <Button asChild className="w-full sm:w-auto">
               <Link to="/quiz/weekly">All Quizzes</Link>
             </Button>
           </CardFooter>
@@ -205,8 +206,8 @@ const WeeklyQuiz = () => {
   
   return (
     <div className="nptel-container py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Week {week.id} Quiz: {week.title}</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+        <h1 className="text-xl md:text-2xl font-bold text-center sm:text-left">Week {week.id} Quiz: {week.title}</h1>
         <Button asChild variant="outline">
           <Link to="/quiz/weekly">Back to Quizzes</Link>
         </Button>
@@ -240,12 +241,12 @@ const WeeklyQuiz = () => {
             ))}
           </div>
         </CardContent>
-        <CardFooter className="flex justify-between">
+        <CardFooter className="flex flex-col sm:flex-row justify-between gap-4">
           <Button
             variant="outline"
             onClick={handlePrevQuestion}
             disabled={currentQuestionIndex === 0}
-            className="flex items-center space-x-2"
+            className="flex items-center space-x-2 w-full sm:w-auto"
           >
             <ArrowLeft className="h-4 w-4" />
             <span>Previous</span>
@@ -255,13 +256,14 @@ const WeeklyQuiz = () => {
             <Button 
               onClick={handleCheckAnswer} 
               disabled={!selectedOption}
+              className="w-full sm:w-auto"
             >
               Check Answer
             </Button>
           ) : (
             <Button 
               onClick={handleNextQuestion} 
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-2 w-full sm:w-auto"
             >
               <span>{currentQuestionIndex < week.questions.length - 1 ? 'Next' : 'Finish Quiz'}</span>
               <ArrowRight className="h-4 w-4" />

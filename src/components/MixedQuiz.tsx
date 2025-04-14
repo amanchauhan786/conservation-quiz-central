@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -66,7 +67,7 @@ const MixedQuiz = () => {
   };
   
   const handleCheckAnswer = () => {
-    if (!selectedOption) return;
+    if (!selectedOption || !currentQuestion) return;
     
     setIsChecking(true);
     
@@ -249,6 +250,7 @@ const MixedQuiz = () => {
                         <p className="font-medium">{item.question}</p>
                         <p className="text-sm mt-2">Your answer: <span className="text-red-600 dark:text-red-400">{item.userAnswer}</span></p>
                         <p className="text-sm">Correct answer: <span className="text-green-600 dark:text-green-400">{item.correctAnswer}</span></p>
+                        <p className="text-xs mt-1 text-muted-foreground">From Week {item.weekId}</p>
                       </div>
                     ))}
                   </div>
@@ -256,15 +258,15 @@ const MixedQuiz = () => {
               )}
             </div>
           </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button asChild variant="outline">
+          <CardFooter className="flex flex-col sm:flex-row justify-between gap-4">
+            <Button asChild variant="outline" className="w-full sm:w-auto">
               <Link to="/learn">Return to Learning</Link>
             </Button>
-            <Button onClick={restartQuiz} className="flex items-center space-x-2">
+            <Button onClick={restartQuiz} className="flex items-center space-x-2 w-full sm:w-auto">
               <RefreshCcw className="h-4 w-4" />
               <span>Take Another Quiz</span>
             </Button>
-            <Button asChild>
+            <Button asChild className="w-full sm:w-auto">
               <Link to="/quiz/weekly">Weekly Quizzes</Link>
             </Button>
           </CardFooter>
@@ -276,8 +278,8 @@ const MixedQuiz = () => {
   return (
     <div className="nptel-container py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Mixed Quiz ({questionCount} Questions)</h1>
-        <Button asChild variant="outline">
+        <h1 className="text-xl md:text-2xl font-bold">Mixed Quiz ({questionCount} Questions)</h1>
+        <Button asChild variant="outline" className="hidden sm:flex">
           <Link to="/quiz/weekly">Back to Quizzes</Link>
         </Button>
       </div>
@@ -293,6 +295,7 @@ const MixedQuiz = () => {
       <Card className="mb-6">
         <CardHeader className="bg-conservation-water/10">
           <CardTitle>Question {currentQuestionIndex + 1}</CardTitle>
+          <CardDescription className="text-xs">Week {currentQuestion.weekId}</CardDescription>
         </CardHeader>
         <CardContent className="pt-6">
           <p className="text-lg mb-6">{currentQuestion.text}</p>
@@ -310,12 +313,12 @@ const MixedQuiz = () => {
             ))}
           </div>
         </CardContent>
-        <CardFooter className="flex justify-between">
+        <CardFooter className="flex flex-col sm:flex-row justify-between gap-4">
           <Button
             variant="outline"
             onClick={handlePrevQuestion}
             disabled={currentQuestionIndex === 0}
-            className="flex items-center space-x-2"
+            className="flex items-center space-x-2 w-full sm:w-auto"
           >
             <ArrowLeft className="h-4 w-4" />
             <span>Previous</span>
@@ -325,13 +328,14 @@ const MixedQuiz = () => {
             <Button 
               onClick={handleCheckAnswer} 
               disabled={!selectedOption}
+              className="w-full sm:w-auto"
             >
               Check Answer
             </Button>
           ) : (
             <Button 
               onClick={handleNextQuestion} 
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-2 w-full sm:w-auto"
             >
               <span>{currentQuestionIndex < totalQuestions - 1 ? 'Next' : 'Finish Quiz'}</span>
               <ArrowRight className="h-4 w-4" />
@@ -339,6 +343,12 @@ const MixedQuiz = () => {
           )}
         </CardFooter>
       </Card>
+      
+      <div className="flex justify-center sm:hidden mt-4">
+        <Button asChild variant="outline" size="sm">
+          <Link to="/quiz/weekly">Back to Quizzes</Link>
+        </Button>
+      </div>
     </div>
   );
 };

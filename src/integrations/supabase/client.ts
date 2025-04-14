@@ -28,7 +28,7 @@ const initSiteStats = async () => {
     if (!data) {
       const { error: insertError } = await supabase
         .from('site_stats')
-        .insert({ id: 1, visitor_count: 0 });
+        .insert({ id: 1, visitor_count: 1000 });
         
       if (insertError) {
         console.error("Error initializing site_stats:", insertError);
