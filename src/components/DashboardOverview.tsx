@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { Award, Clock, Book, BarChart2, CheckCircle, Activity, AlertCircle } from 'lucide-react';
+import { Award, Clock, Book, BarChart2, CheckCircle, Activity, AlertCircle, Users } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -15,6 +15,41 @@ const DashboardOverview = () => {
   const [weeklyPerformance, setWeeklyPerformance] = useState<any[]>([]);
   const [weakAreas, setWeakAreas] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [visitorCount, setVisitorCount] = useState(0);
+
+  // Track page visit when component mounts
+  useEffect(() => {
+    const trackVisit = async () => {
+      try {
+        // Get current visitor count
+        const { data: visitorData, error: visitorError } = await supabase
+          .from('site_stats')
+          .select('visitor_count')
+          .single();
+        
+        if (visitorError && visitorError.code !== 'PGRST116') {
+          console.error("Error fetching visitor count:", visitorError);
+          return;
+        }
+        
+        const currentCount = visitorData?.visitor_count || 0;
+        setVisitorCount(currentCount + 1);
+        
+        // Update visitor count
+        const { error: updateError } = await supabase
+          .from('site_stats')
+          .upsert({ id: 1, visitor_count: currentCount + 1 });
+        
+        if (updateError) {
+          console.error("Error updating visitor count:", updateError);
+        }
+      } catch (error) {
+        console.error("Error tracking visit:", error);
+      }
+    };
+    
+    trackVisit();
+  }, []);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -70,9 +105,8 @@ const DashboardOverview = () => {
         // Fetch weak areas (most frequently incorrect answers)
         const { data: incorrectData, error: incorrectError } = await supabase
           .from('incorrect_answers')
-          .select('week_id, question_text, correct_answer, COUNT(*)')
+          .select('week_id, question_text, correct_answer, count(*)')
           .eq('user_id', user.id)
-          .group('week_id, question_text, correct_answer')
           .order('count', { ascending: false })
           .limit(3);
         
@@ -138,9 +172,9 @@ const DashboardOverview = () => {
           
           <Card className="bg-gradient-to-br from-purple-100 to-purple-50 dark:from-purple-900/20 dark:to-purple-800/10">
             <CardContent className="flex flex-col items-center pt-6">
-              <Clock className="h-10 w-10 mb-2 text-purple-500" />
-              <h3 className="text-xl font-semibold">Self-Paced</h3>
-              <p className="text-sm text-muted-foreground">Learn At Your Pace</p>
+              <Users className="h-10 w-10 mb-2 text-purple-500" />
+              <h3 className="text-xl font-semibold">{visitorCount}</h3>
+              <p className="text-sm text-muted-foreground">Total Visitors</p>
             </CardContent>
           </Card>
         </div>
