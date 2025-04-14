@@ -2,16 +2,14 @@
 import React, { useState } from 'react';
 import { Book, ChevronRight } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Link } from 'react-router-dom';
 import { weeks } from '@/data/weekData';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const WeeklyLearning = () => {
   const [selectedWeek, setSelectedWeek] = useState("1");
-  const isMobile = useIsMobile();
 
   const handleWeekChange = (value: string) => {
     setSelectedWeek(value);
@@ -31,30 +29,20 @@ const WeeklyLearning = () => {
           <div className="mb-4">
             <h2 className="text-lg font-medium mb-2">Select Week</h2>
             
-            {isMobile ? (
-              <div className="w-full">
-                <Select value={selectedWeek} onValueChange={handleWeekChange}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a week" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {weeks.map((week) => (
-                      <SelectItem key={week.id} value={week.id.toString()}>
-                        Week {week.id}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            ) : (
-              <TabsList className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                {weeks.map((week) => (
-                  <TabsTrigger key={week.id} value={week.id.toString()}>
-                    Week {week.id}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            )}
+            <div className="w-full">
+              <Select value={selectedWeek} onValueChange={handleWeekChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a week" />
+                </SelectTrigger>
+                <SelectContent>
+                  {weeks.map((week) => (
+                    <SelectItem key={week.id} value={week.id.toString()}>
+                      Week {week.id}: {week.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
