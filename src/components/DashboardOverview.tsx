@@ -1,9 +1,10 @@
+
 import React, { useEffect, useState } from 'react';
 import { Award, Book, BarChart2, CheckCircle, Activity, AlertCircle, Users } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthProvider';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ const DashboardOverview = () => {
   const [weakAreas, setWeakAreas] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [visitorCount, setVisitorCount] = useState(0);
+  const [quizDistribution, setQuizDistribution] = useState<any[]>([]);
 
   // Track page visit when component mounts
   useEffect(() => {
@@ -71,28 +73,29 @@ const DashboardOverview = () => {
         // Get weekly performance data
         const { data: weekData, error: weekError } = await supabase
           .from('quiz_attempts')
-          .select('week_id, score, total_questions')
+          .select('week_id, score, total_questions, quiz_type')
           .eq('user_id', user.id)
-          .eq('quiz_type', 'weekly')
           .order('week_id', { ascending: true });
         
         if (weekError) throw weekError;
         
         // Process weekly performance data
         const processedWeekData = weekData?.reduce((acc: any, curr: any) => {
-          const existingWeek = acc.find((item: any) => item.week === `Week ${curr.week_id}`);
-          
-          if (existingWeek) {
-            // If multiple attempts for same week, use the highest score
-            const newScore = Math.round((curr.score / curr.total_questions) * 100);
-            if (newScore > existingWeek.score) {
-              existingWeek.score = newScore;
+          if (curr.quiz_type === 'weekly') {
+            const existingWeek = acc.find((item: any) => item.week === `Week ${curr.week_id}`);
+            
+            if (existingWeek) {
+              // If multiple attempts for same week, use the highest score
+              const newScore = Math.round((curr.score / curr.total_questions) * 100);
+              if (newScore > existingWeek.score) {
+                existingWeek.score = newScore;
+              }
+            } else {
+              acc.push({
+                week: `Week ${curr.week_id}`,
+                score: Math.round((curr.score / curr.total_questions) * 100)
+              });
             }
-          } else {
-            acc.push({
-              week: `Week ${curr.week_id}`,
-              score: Math.round((curr.score / curr.total_questions) * 100)
-            });
           }
           
           return acc;
@@ -100,16 +103,58 @@ const DashboardOverview = () => {
         
         setWeeklyPerformance(processedWeekData || []);
         
+        // Calculate quiz distribution (weekly vs mixed)
+        const quizTypes = weekData?.reduce((acc: any, curr: any) => {
+          const type = curr.quiz_type === 'weekly' ? 'Weekly Quizzes' : 'Mixed Quizzes';
+          const existing = acc.find((item: any) => item.name === type);
+          
+          if (existing) {
+            existing.value += 1;
+          } else {
+            acc.push({
+              name: type,
+              value: 1
+            });
+          }
+          
+          return acc;
+        }, []);
+        
+        setQuizDistribution(quizTypes || []);
+        
         // Fetch weak areas (most frequently incorrect answers)
+        // Using a different approach without .group() which is causing issues
         const { data: incorrectData, error: incorrectError } = await supabase
           .from('incorrect_answers')
-          .select('week_id, question_text, correct_answer, count(*)')
-          .eq('user_id', user.id)
-          .order('count', { ascending: false })
-          .limit(3);
+          .select('*')
+          .eq('user_id', user.id);
         
         if (incorrectError) throw incorrectError;
-        setWeakAreas(incorrectData || []);
+        
+        // Process the data to group by question and count occurrences
+        const groupedData = (incorrectData || []).reduce((acc: any[], item) => {
+          const existingItem = acc.find(
+            x => x.question_text === item.question_text && x.week_id === item.week_id
+          );
+          
+          if (existingItem) {
+            existingItem.count += 1;
+          } else {
+            acc.push({
+              week_id: item.week_id,
+              question_text: item.question_text,
+              correct_answer: item.correct_answer,
+              count: 1
+            });
+          }
+          
+          return acc;
+        }, []);
+        
+        // Sort by count (descending)
+        const sortedData = groupedData.sort((a, b) => b.count - a.count).slice(0, 3);
+        
+        setWeakAreas(sortedData);
         
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -121,26 +166,9 @@ const DashboardOverview = () => {
     fetchUserData();
   }, [user]);
 
-  const renderDashboard = () => {
-    if (!user) {
-      return (
-        <Card className="text-center p-6 my-8">
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center space-y-4">
-              <AlertCircle className="h-12 w-12 text-amber-500" />
-              <h2 className="text-2xl font-semibold">Sign in to view your personalized dashboard</h2>
-              <p className="text-muted-foreground mb-4">
-                Track your progress, see your quiz history, and get personalized recommendations by signing in.
-              </p>
-              <Button asChild>
-                <Link to="/auth">Sign In / Create Account</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      );
-    }
+  const COLORS = ['#34D399', '#38BDF8', '#FB7185', '#A78BFA'];
 
+  const renderDashboard = () => {
     return (
       <>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -177,99 +205,138 @@ const DashboardOverview = () => {
           </Card>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart2 className="h-5 w-5" />
-                Weekly Performance
-              </CardTitle>
-              <CardDescription>Your progress across weekly quizzes</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {weeklyPerformance.length > 0 ? (
-                <div className="h-[300px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={weeklyPerformance} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="week" />
-                      <YAxis domain={[0, 100]} />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="score" name="Score (%)" fill="#34D399" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-[300px] text-center">
-                  <p className="text-muted-foreground mb-4">Complete some weekly quizzes to see your performance data.</p>
-                  <Button asChild>
-                    <Link to="/quiz/weekly">Take a Quiz</Link>
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5" />
-                Recent Activity
-              </CardTitle>
-              <CardDescription>Your latest quiz attempts</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {quizAttempts.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Quiz</TableHead>
-                      <TableHead>Score</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {quizAttempts.map((attempt) => (
-                      <TableRow key={attempt.id}>
-                        <TableCell>{attempt.quiz_type === 'weekly' ? `Week ${attempt.week_id}` : 'Mixed Quiz'}</TableCell>
-                        <TableCell>{attempt.score}/{attempt.total_questions}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="text-center py-6">
-                  <p className="text-muted-foreground mb-4">No quiz attempts yet. Start taking quizzes to track your progress.</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-        
-        {weakAreas.length > 0 && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertCircle className="h-5 w-5" />
-                Areas to Improve
-              </CardTitle>
-              <CardDescription>Questions you've struggled with most frequently</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {weakAreas.map((item, index) => (
-                  <div key={index} className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
-                    <div className="flex justify-between mb-2">
-                      <span className="font-medium">Week {item.week_id}</span>
-                      <span className="text-sm text-muted-foreground">Missed {item.count} times</span>
+        {user && (
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart2 className="h-5 w-5" />
+                    Weekly Performance
+                  </CardTitle>
+                  <CardDescription>Your progress across weekly quizzes</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {weeklyPerformance.length > 0 ? (
+                    <div className="h-[300px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={weeklyPerformance} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="week" />
+                          <YAxis domain={[0, 100]} />
+                          <Tooltip />
+                          <Legend />
+                          <Bar dataKey="score" name="Score (%)" fill="#34D399" />
+                        </BarChart>
+                      </ResponsiveContainer>
                     </div>
-                    <p className="mb-2">{item.question_text}</p>
-                    <p className="text-sm">Correct answer: <span className="text-green-600 dark:text-green-400">{item.correct_answer}</span></p>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-[300px] text-center">
+                      <p className="text-muted-foreground mb-4">Complete some weekly quizzes to see your performance data.</p>
+                      <Button asChild>
+                        <Link to="/quiz/weekly">Take a Quiz</Link>
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5" />
+                    Recent Activity
+                  </CardTitle>
+                  <CardDescription>Your latest quiz attempts</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {quizAttempts.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Quiz</TableHead>
+                          <TableHead>Score</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {quizAttempts.map((attempt) => (
+                          <TableRow key={attempt.id}>
+                            <TableCell>{attempt.quiz_type === 'weekly' ? `Week ${attempt.week_id}` : 'Mixed Quiz'}</TableCell>
+                            <TableCell>{attempt.score}/{attempt.total_questions}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <div className="text-center py-6">
+                      <p className="text-muted-foreground mb-4">No quiz attempts yet. Start taking quizzes to track your progress.</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+            
+            {quizDistribution.length > 0 && (
+              <Card className="mb-8">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-5 w-5" />
+                    Quiz Distribution
+                  </CardTitle>
+                  <CardDescription>Types of quizzes you've taken</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[250px] flex justify-center items-center">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={quizDistribution}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={true}
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                        >
+                          {quizDistribution.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            )}
+            
+            {weakAreas.length > 0 && (
+              <Card className="mb-8">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <AlertCircle className="h-5 w-5" />
+                    Areas to Improve
+                  </CardTitle>
+                  <CardDescription>Questions you've struggled with most frequently</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {weakAreas.map((item, index) => (
+                      <div key={index} className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                        <div className="flex justify-between mb-2">
+                          <span className="font-medium">Week {item.week_id}</span>
+                          <span className="text-sm text-muted-foreground">Missed {item.count} times</span>
+                        </div>
+                        <p className="mb-2">{item.question_text}</p>
+                        <p className="text-sm">Correct answer: <span className="text-green-600 dark:text-green-400">{item.correct_answer}</span></p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </>
         )}
       </>
     );

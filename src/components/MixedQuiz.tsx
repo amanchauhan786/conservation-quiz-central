@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { weeks } from '@/data/weekData';
 import QuizOption from './QuizOption';
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle, RotateCcw, Trophy, ChevronRight } from 'lucide-react';
+import { CheckCircle, XCircle, RotateCcw, Trophy, ChevronRight, Linkedin, Github } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Progress } from "@/components/ui/progress";
 
@@ -247,6 +247,28 @@ const MixedQuiz = () => {
               Back to Dashboard
             </Button>
           </div>
+          
+          <div className="text-center mt-8 pt-4 border-t">
+            <p className="text-sm text-muted-foreground mb-2">Follow Aman on</p>
+            <div className="flex justify-center space-x-4">
+              <a 
+                href="https://www.linkedin.com/in/aman-chauhan-128552256" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-blue-500 hover:text-blue-700 transition-colors"
+              >
+                <Linkedin size={20} />
+              </a>
+              <a 
+                href="https://github.com/amanchauhan786" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors"
+              >
+                <Github size={20} />
+              </a>
+            </div>
+          </div>
         </CardContent>
       </Card>
     );
@@ -273,9 +295,8 @@ const MixedQuiz = () => {
               key={index}
               option={option}
               selected={selectedOption === option}
-              correct={isAnswered ? option === currentQuestion.correctAnswer : undefined}
-              incorrect={isAnswered ? (selectedOption === option && option !== currentQuestion.correctAnswer) : undefined}
-              disabled={isAnswered}
+              isCorrect={isAnswered ? option === currentQuestion.correctAnswer : null}
+              isChecking={isAnswered}
               onSelect={() => handleOptionSelect(option)}
             />
           ))}

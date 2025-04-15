@@ -20,6 +20,7 @@ const Footer = () => {
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="hover:text-blue-300 transition-colors"
+                aria-label="LinkedIn"
               >
                 <Linkedin size={24} />
               </a>
@@ -28,6 +29,7 @@ const Footer = () => {
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="hover:text-gray-300 transition-colors"
+                aria-label="GitHub"
               >
                 <Github size={24} />
               </a>
