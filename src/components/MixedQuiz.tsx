@@ -53,7 +53,7 @@ const MixedQuiz = () => {
     const allQuestions: Question[] = [];
     
     weeks.forEach(week => {
-      if (week.content && Array.isArray(week.content.questions)) {
+      if (week.content && week.content.questions && Array.isArray(week.content.questions)) {
         const weekQuestions = week.content.questions.map(q => ({
           ...q,
           week_id: week.id // Add the week_id to each question
@@ -79,6 +79,7 @@ const MixedQuiz = () => {
     }
   }, [quizStarted, numberOfQuestions]);
   
+  // Add a safety check for currentQuestion
   const currentQuestion = questions[currentQuestionIndex];
   
   const handleOptionSelect = (option: string) => {
@@ -87,7 +88,7 @@ const MixedQuiz = () => {
   };
   
   const handleCheckAnswer = async () => {
-    if (!selectedOption) return;
+    if (!selectedOption || !currentQuestion) return;
     
     const isCorrect = selectedOption === currentQuestion.correctAnswer;
     
@@ -369,6 +370,16 @@ const MixedQuiz = () => {
     );
   }
   
+  // Add a guard clause to prevent rendering when currentQuestion is undefined
+  if (!currentQuestion) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64">
+        <p className="text-lg text-muted-foreground mb-4">No questions available for this quiz.</p>
+        <Button onClick={handleRestart}>Go Back</Button>
+      </div>
+    );
+  }
+  
   return (
     <Card className="max-w-3xl mx-auto mt-4">
       <CardHeader className="bg-conservation-water/10">
@@ -421,3 +432,4 @@ const MixedQuiz = () => {
 };
 
 export default MixedQuiz;
+
