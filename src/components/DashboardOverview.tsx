@@ -1,13 +1,13 @@
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Award, Book, BarChart2, CheckCircle, Activity, AlertCircle, Users } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthProvider';
 import { Button } from '@/components/ui/button';
+import IncorrectAnswersHistory from './IncorrectAnswersHistory';
 
 const DashboardOverview = () => {
   const { user } = useAuth();
@@ -15,8 +15,9 @@ const DashboardOverview = () => {
   const [weeklyPerformance, setWeeklyPerformance] = useState<any[]>([]);
   const [weakAreas, setWeakAreas] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [visitorCount, setVisitorCount] = useState(0);
+  const [visitorCount, setVisitorCount] = useState(1000); // Starting at 1000
   const [quizDistribution, setQuizDistribution] = useState<any[]>([]);
+  const navigate = useNavigate();
 
   // Track page visit when component mounts
   useEffect(() => {
@@ -34,7 +35,7 @@ const DashboardOverview = () => {
           return;
         }
         
-        const currentCount = visitorData?.visitor_count || 0;
+        const currentCount = visitorData?.visitor_count || 1000;
         const newCount = currentCount + 1;
         setVisitorCount(newCount);
         
@@ -50,6 +51,11 @@ const DashboardOverview = () => {
     
     trackVisit();
   }, []);
+
+  // Scroll to learning section
+  const scrollToLearn = () => {
+    navigate('/learn');
+  };
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -172,7 +178,10 @@ const DashboardOverview = () => {
     return (
       <>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Card className="bg-gradient-to-br from-conservation-green/10 to-conservation-green/5">
+          <Card 
+            className="bg-gradient-to-br from-conservation-green/10 to-conservation-green/5 cursor-pointer hover:shadow-md transition-shadow"
+            onClick={scrollToLearn}
+          >
             <CardContent className="flex flex-col items-center pt-6">
               <Book className="h-10 w-10 mb-2 text-conservation-green" />
               <h3 className="text-xl font-semibold">12 Weeks</h3>
@@ -180,7 +189,10 @@ const DashboardOverview = () => {
             </CardContent>
           </Card>
           
-          <Card className="bg-gradient-to-br from-conservation-earth/10 to-conservation-earth/5">
+          <Card 
+            className="bg-gradient-to-br from-conservation-earth/10 to-conservation-earth/5 cursor-pointer hover:shadow-md transition-shadow"
+            onClick={scrollToLearn}
+          >
             <CardContent className="flex flex-col items-center pt-6">
               <Award className="h-10 w-10 mb-2 text-conservation-earth" />
               <h3 className="text-xl font-semibold">120+ Questions</h3>
@@ -188,7 +200,10 @@ const DashboardOverview = () => {
             </CardContent>
           </Card>
           
-          <Card className="bg-gradient-to-br from-conservation-water/10 to-conservation-water/5">
+          <Card 
+            className="bg-gradient-to-br from-conservation-water/10 to-conservation-water/5 cursor-pointer hover:shadow-md transition-shadow"
+            onClick={scrollToLearn}
+          >
             <CardContent className="flex flex-col items-center pt-6">
               <Activity className="h-10 w-10 mb-2 text-conservation-water" />
               <h3 className="text-xl font-semibold">Track Progress</h3>
@@ -196,7 +211,10 @@ const DashboardOverview = () => {
             </CardContent>
           </Card>
           
-          <Card className="bg-gradient-to-br from-purple-100 to-purple-50 dark:from-purple-900/20 dark:to-purple-800/10">
+          <Card 
+            className="bg-gradient-to-br from-purple-100 to-purple-50 dark:from-purple-900/20 dark:to-purple-800/10 cursor-pointer hover:shadow-md transition-shadow"
+            onClick={scrollToLearn}
+          >
             <CardContent className="flex flex-col items-center pt-6">
               <Users className="h-10 w-10 mb-2 text-purple-500" />
               <h3 className="text-xl font-semibold">{visitorCount}</h3>
@@ -276,6 +294,9 @@ const DashboardOverview = () => {
               </Card>
             </div>
             
+            {/* Areas to Improve section - Now placed on the dashboard */}
+            <IncorrectAnswersHistory />
+            
             {quizDistribution.length > 0 && (
               <Card className="mb-8">
                 <CardHeader>
@@ -306,32 +327,6 @@ const DashboardOverview = () => {
                         <Tooltip />
                       </PieChart>
                     </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-            
-            {weakAreas.length > 0 && (
-              <Card className="mb-8">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <AlertCircle className="h-5 w-5" />
-                    Areas to Improve
-                  </CardTitle>
-                  <CardDescription>Questions you've struggled with most frequently</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {weakAreas.map((item, index) => (
-                      <div key={index} className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
-                        <div className="flex justify-between mb-2">
-                          <span className="font-medium">Week {item.week_id}</span>
-                          <span className="text-sm text-muted-foreground">Missed {item.count} times</span>
-                        </div>
-                        <p className="mb-2">{item.question_text}</p>
-                        <p className="text-sm">Correct answer: <span className="text-green-600 dark:text-green-400">{item.correct_answer}</span></p>
-                      </div>
-                    ))}
                   </div>
                 </CardContent>
               </Card>
