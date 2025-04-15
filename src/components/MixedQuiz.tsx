@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, RotateCcw, Trophy, ChevronRight, Linkedin, Github } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Progress } from "@/components/ui/progress";
+import { Slider } from "@/components/ui/slider";
 
 // Define Quiz Question type
 interface Question {
@@ -31,11 +32,6 @@ const shuffleArray = (array: any[]) => {
   return shuffled;
 };
 
-// Random int in range
-const getRandomInt = (min: number, max: number) => {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-};
-
 const MixedQuiz = () => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -45,6 +41,8 @@ const MixedQuiz = () => {
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [incorrectAnswers, setIncorrectAnswers] = useState<{question: Question, userAnswer: string}[]>([]);
+  const [quizStarted, setQuizStarted] = useState(false);
+  const [numberOfQuestions, setNumberOfQuestions] = useState<number>(10);
   
   const { user } = useAuth();
   const { toast } = useToast();
@@ -55,24 +53,31 @@ const MixedQuiz = () => {
     const allQuestions: Question[] = [];
     
     weeks.forEach(week => {
-      const weekQuestions = week.content.questions.map(q => ({
-        ...q,
-        week_id: week.id // Add the week_id to each question
-      }));
-      allQuestions.push(...weekQuestions);
+      if (week.content && Array.isArray(week.content.questions)) {
+        const weekQuestions = week.content.questions.map(q => ({
+          ...q,
+          week_id: week.id // Add the week_id to each question
+        }));
+        allQuestions.push(...weekQuestions);
+      }
     });
     
-    // Now, let's shuffle and select 10 random questions
+    // Now, let's shuffle and select the requested number of questions
     const shuffled = shuffleArray(allQuestions);
-    const selectedQuestions = shuffled.slice(0, 10);
+    const selectedQuestions = shuffled.slice(0, numberOfQuestions);
     
     setQuestions(selectedQuestions);
     setLoading(false);
   };
   
   useEffect(() => {
-    generateRandomMixedQuestions();
-  }, []);
+    // Only generate questions if quiz has started
+    if (quizStarted) {
+      generateRandomMixedQuestions();
+    } else {
+      setLoading(false);
+    }
+  }, [quizStarted, numberOfQuestions]);
   
   const currentQuestion = questions[currentQuestionIndex];
   
@@ -91,7 +96,7 @@ const MixedQuiz = () => {
       toast({
         title: "Correct!",
         description: `That's the right answer.`,
-        variant: "success",
+        variant: "default",
       });
     } else {
       // Track incorrect answer
@@ -109,12 +114,38 @@ const MixedQuiz = () => {
       // Save incorrect answer to Supabase if user is logged in
       if (user) {
         try {
+          // Create a quiz attempt first if this is the first incorrect answer
+          let attemptId = localStorage.getItem('currentMixedQuizAttemptId');
+          
+          if (!attemptId) {
+            const { data: attemptData, error: attemptError } = await supabase
+              .from('quiz_attempts')
+              .insert({
+                user_id: user.id,
+                quiz_type: 'mixed',
+                score: 0, // Will be updated at end
+                total_questions: questions.length,
+                week_id: null // Mixed quiz has no specific week
+              })
+              .select('id')
+              .single();
+              
+            if (attemptError) {
+              console.error("Error creating quiz attempt:", attemptError);
+              return;
+            }
+            
+            attemptId = attemptData.id;
+            localStorage.setItem('currentMixedQuizAttemptId', attemptId);
+          }
+          
           await supabase.from('incorrect_answers').insert({
             user_id: user.id,
             week_id: currentQuestion.week_id,
             question_text: currentQuestion.text,
             user_answer: selectedOption,
-            correct_answer: currentQuestion.correctAnswer
+            correct_answer: currentQuestion.correctAnswer,
+            attempt_id: attemptId
           });
         } catch (error) {
           console.error("Error saving incorrect answer:", error);
@@ -141,25 +172,46 @@ const MixedQuiz = () => {
   
   const saveQuizAttempt = async () => {
     try {
-      await supabase.from('quiz_attempts').insert({
-        user_id: user!.id,
-        quiz_type: 'mixed',
-        score: score,
-        total_questions: questions.length
-      });
+      const attemptId = localStorage.getItem('currentMixedQuizAttemptId');
+      
+      if (attemptId) {
+        // Update existing attempt with final score
+        await supabase.from('quiz_attempts').update({
+          score: score,
+        }).eq('id', attemptId);
+      } else {
+        // Create new attempt
+        await supabase.from('quiz_attempts').insert({
+          user_id: user!.id,
+          quiz_type: 'mixed',
+          score: score,
+          total_questions: questions.length
+        });
+      }
+      
+      // Clear stored attempt ID
+      localStorage.removeItem('currentMixedQuizAttemptId');
     } catch (error) {
       console.error("Error saving quiz attempt:", error);
     }
   };
   
-  const handleRestart = () => {
+  const handleStartQuiz = () => {
+    setQuizStarted(true);
+    setLoading(true);
     setCurrentQuestionIndex(0);
     setSelectedOption(null);
     setIsAnswered(false);
     setScore(0);
     setQuizCompleted(false);
     setIncorrectAnswers([]);
-    generateRandomMixedQuestions();
+    // Clear any previous attempt ID
+    localStorage.removeItem('currentMixedQuizAttemptId');
+  };
+  
+  const handleRestart = () => {
+    setQuizStarted(false);
+    setQuizCompleted(false);
   };
   
   if (loading) {
@@ -167,6 +219,49 @@ const MixedQuiz = () => {
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-conservation-water"></div>
       </div>
+    );
+  }
+  
+  if (!quizStarted) {
+    return (
+      <Card className="max-w-3xl mx-auto mt-4">
+        <CardHeader className="bg-conservation-water/10">
+          <CardTitle>Mixed Quiz</CardTitle>
+          <CardDescription>Test your knowledge with questions from all weeks</CardDescription>
+        </CardHeader>
+        <CardContent className="pt-6 space-y-6">
+          <div>
+            <h3 className="text-lg font-medium mb-2">Number of Questions</h3>
+            <div className="space-y-3">
+              <Slider
+                value={[numberOfQuestions]}
+                onValueChange={(value) => setNumberOfQuestions(value[0])}
+                min={5}
+                max={20}
+                step={5}
+                className="w-full"
+              />
+              <div className="flex justify-between">
+                <span>5</span>
+                <span>10</span>
+                <span>15</span>
+                <span>20</span>
+              </div>
+              <p className="text-center font-medium mt-2">Selected: {numberOfQuestions} questions</p>
+            </div>
+          </div>
+          
+          <div className="flex justify-center mt-6">
+            <Button 
+              onClick={handleStartQuiz} 
+              size="lg"
+              className="w-full sm:w-auto"
+            >
+              Start Quiz
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
   
