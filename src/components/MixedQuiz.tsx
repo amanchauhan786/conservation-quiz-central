@@ -32,6 +32,70 @@ const shuffleArray = (array: any[]) => {
   return shuffled;
 };
 
+// Sample fallback questions in case no questions are found in weeks data
+const sampleQuestions: Question[] = [
+  {
+    id: 1001,
+    text: "What is the main focus of conservation economics?",
+    options: [
+      "Sustainable resource management",
+      "Maximizing short-term profits",
+      "Ignoring environmental impacts",
+      "Industrial development"
+    ],
+    correctAnswer: "Sustainable resource management",
+    week_id: 1
+  },
+  {
+    id: 1002,
+    text: "Which of the following is a renewable resource?",
+    options: [
+      "Coal",
+      "Solar energy",
+      "Natural gas",
+      "Oil"
+    ],
+    correctAnswer: "Solar energy",
+    week_id: 2
+  },
+  {
+    id: 1003,
+    text: "What is a negative externality?",
+    options: [
+      "A benefit that affects a third party who did not choose to incur that benefit",
+      "A cost that affects a third party who did not choose to incur that cost",
+      "A government subsidy",
+      "A type of private good"
+    ],
+    correctAnswer: "A cost that affects a third party who did not choose to incur that cost",
+    week_id: 3
+  },
+  {
+    id: 1004,
+    text: "Which policy approach uses market mechanisms to reduce pollution?",
+    options: [
+      "Command and control regulation",
+      "Emissions trading",
+      "Technology standards",
+      "Outright bans"
+    ],
+    correctAnswer: "Emissions trading",
+    week_id: 4
+  },
+  {
+    id: 1005,
+    text: "What is the concept of 'sustainability' primarily concerned with?",
+    options: [
+      "Meeting present needs without compromising future generations",
+      "Maximizing current economic output",
+      "Reducing all human impact on natural systems",
+      "Eliminating the use of all natural resources"
+    ],
+    correctAnswer: "Meeting present needs without compromising future generations",
+    week_id: 5
+  }
+];
+
 const MixedQuiz = () => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -53,6 +117,7 @@ const MixedQuiz = () => {
     const allQuestions: Question[] = [];
     
     weeks.forEach(week => {
+      // Only extract questions if they exist in the week's content
       if (week.content && week.content.questions && Array.isArray(week.content.questions)) {
         const weekQuestions = week.content.questions.map(q => ({
           ...q,
@@ -62,9 +127,12 @@ const MixedQuiz = () => {
       }
     });
     
+    // If no questions were found in the weeks data, use sample questions
+    const questionsToUse = allQuestions.length > 0 ? allQuestions : sampleQuestions;
+    
     // Now, let's shuffle and select the requested number of questions
-    const shuffled = shuffleArray(allQuestions);
-    const selectedQuestions = shuffled.slice(0, numberOfQuestions);
+    const shuffled = shuffleArray(questionsToUse);
+    const selectedQuestions = shuffled.slice(0, Math.min(numberOfQuestions, questionsToUse.length));
     
     setQuestions(selectedQuestions);
     setLoading(false);
@@ -432,4 +500,3 @@ const MixedQuiz = () => {
 };
 
 export default MixedQuiz;
-
