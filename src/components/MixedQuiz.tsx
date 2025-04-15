@@ -1,501 +1,299 @@
-
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Link, useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { ArrowLeft, ArrowRight, CheckCircle, RefreshCcw } from 'lucide-react';
+import { Linkedin, Github } from 'lucide-react';
+import QuizOption from './QuizOption';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from './AuthProvider';
-import { useToast } from '@/hooks/use-toast';
 import { weeks } from '@/data/weekData';
-import QuizOption from './QuizOption';
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle, RotateCcw, Trophy, ChevronRight, Linkedin, Github } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { Progress } from "@/components/ui/progress";
-import { Slider } from "@/components/ui/slider";
-
-// Define Quiz Question type
-interface Question {
-  id: number;
-  text: string;
-  options: string[];
-  correctAnswer: string;
-  week_id: number; // Add week_id property
-}
-
-// Shuffle an array
-const shuffleArray = (array: any[]) => {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-};
-
-// Sample fallback questions in case no questions are found in weeks data
-const sampleQuestions: Question[] = [
-  {
-    id: 1001,
-    text: "What is the main focus of conservation economics?",
-    options: [
-      "Sustainable resource management",
-      "Maximizing short-term profits",
-      "Ignoring environmental impacts",
-      "Industrial development"
-    ],
-    correctAnswer: "Sustainable resource management",
-    week_id: 1
-  },
-  {
-    id: 1002,
-    text: "Which of the following is a renewable resource?",
-    options: [
-      "Coal",
-      "Solar energy",
-      "Natural gas",
-      "Oil"
-    ],
-    correctAnswer: "Solar energy",
-    week_id: 2
-  },
-  {
-    id: 1003,
-    text: "What is a negative externality?",
-    options: [
-      "A benefit that affects a third party who did not choose to incur that benefit",
-      "A cost that affects a third party who did not choose to incur that cost",
-      "A government subsidy",
-      "A type of private good"
-    ],
-    correctAnswer: "A cost that affects a third party who did not choose to incur that cost",
-    week_id: 3
-  },
-  {
-    id: 1004,
-    text: "Which policy approach uses market mechanisms to reduce pollution?",
-    options: [
-      "Command and control regulation",
-      "Emissions trading",
-      "Technology standards",
-      "Outright bans"
-    ],
-    correctAnswer: "Emissions trading",
-    week_id: 4
-  },
-  {
-    id: 1005,
-    text: "What is the concept of 'sustainability' primarily concerned with?",
-    options: [
-      "Meeting present needs without compromising future generations",
-      "Maximizing current economic output",
-      "Reducing all human impact on natural systems",
-      "Eliminating the use of all natural resources"
-    ],
-    correctAnswer: "Meeting present needs without compromising future generations",
-    week_id: 5
-  }
-];
+import { Question } from '@/types';
 
 const MixedQuiz = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { user } = useAuth();
+
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const [isAnswered, setIsAnswered] = useState(false);
+  const [isChecking, setIsChecking] = useState(false);
   const [score, setScore] = useState(0);
   const [quizCompleted, setQuizCompleted] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [incorrectAnswers, setIncorrectAnswers] = useState<{question: Question, userAnswer: string}[]>([]);
-  const [quizStarted, setQuizStarted] = useState(false);
-  const [numberOfQuestions, setNumberOfQuestions] = useState<number>(10);
-  
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const navigate = useNavigate();
-  
-  const generateRandomMixedQuestions = () => {
-    // First, let's extract all questions from all weeks
-    const allQuestions: Question[] = [];
-    
-    weeks.forEach(week => {
-      // Only extract questions if they exist in the week's content
-      if (week.content && week.content.questions && Array.isArray(week.content.questions)) {
-        const weekQuestions = week.content.questions.map(q => ({
-          ...q,
-          week_id: week.id // Add the week_id to each question
-        }));
-        allQuestions.push(...weekQuestions);
-      }
-    });
-    
-    // If no questions were found in the weeks data, use sample questions
-    const questionsToUse = allQuestions.length > 0 ? allQuestions : sampleQuestions;
-    
-    // Now, let's shuffle and select the requested number of questions
-    const shuffled = shuffleArray(questionsToUse);
-    const selectedQuestions = shuffled.slice(0, Math.min(numberOfQuestions, questionsToUse.length));
-    
-    setQuestions(selectedQuestions);
-    setLoading(false);
-  };
-  
-  useEffect(() => {
-    // Only generate questions if quiz has started
-    if (quizStarted) {
-      generateRandomMixedQuestions();
-    } else {
-      setLoading(false);
-    }
-  }, [quizStarted, numberOfQuestions]);
-  
-  // Add a safety check for currentQuestion
+  const [incorrectAnswers, setIncorrectAnswers] = useState<Array<{
+    question: string;
+    correctAnswer: string;
+    userAnswer: string;
+  }>>([]);
+
   const currentQuestion = questions[currentQuestionIndex];
-  
+  const progress = questions ? ((currentQuestionIndex + 1) / questions.length) * 100 : 0;
+
+  useEffect(() => {
+    const allQuestions: Question[] = [];
+    weeks.forEach(week => {
+      allQuestions.push(...week.questions);
+    });
+
+    // Shuffle questions
+    const shuffledQuestions = allQuestions.sort(() => Math.random() - 0.5);
+    setQuestions(shuffledQuestions);
+  }, []);
+
+  useEffect(() => {
+    // Reset state when moving to new question
+    setSelectedOption(null);
+    setIsChecking(false);
+  }, [currentQuestionIndex]);
+
+  if (!currentQuestion) {
+    return null;
+  }
+
   const handleOptionSelect = (option: string) => {
-    if (isAnswered) return;
+    if (isChecking) return;
     setSelectedOption(option);
   };
-  
-  const handleCheckAnswer = async () => {
-    if (!selectedOption || !currentQuestion) return;
-    
-    const isCorrect = selectedOption === currentQuestion.correctAnswer;
-    
-    if (isCorrect) {
-      setScore(prev => prev + 1);
-      toast({
-        title: "Correct!",
-        description: `That's the right answer.`,
-        variant: "default",
-      });
+
+  const handleCheckAnswer = () => {
+    if (!selectedOption) return;
+
+    setIsChecking(true);
+
+    if (selectedOption === currentQuestion.correctAnswer) {
+      setScore(score + 1);
     } else {
-      // Track incorrect answer
-      setIncorrectAnswers(prev => [...prev, {
-        question: currentQuestion,
+      // Record incorrect answer
+      setIncorrectAnswers([...incorrectAnswers, {
+        question: currentQuestion.text,
+        correctAnswer: currentQuestion.correctAnswer,
         userAnswer: selectedOption
       }]);
-      
-      toast({
-        title: "Incorrect",
-        description: `The correct answer is: ${currentQuestion.correctAnswer}`,
-        variant: "destructive",
-      });
-
-      // Save incorrect answer to Supabase if user is logged in
-      if (user) {
-        try {
-          // Create a quiz attempt first if this is the first incorrect answer
-          let attemptId = localStorage.getItem('currentMixedQuizAttemptId');
-          
-          if (!attemptId) {
-            const { data: attemptData, error: attemptError } = await supabase
-              .from('quiz_attempts')
-              .insert({
-                user_id: user.id,
-                quiz_type: 'mixed',
-                score: 0, // Will be updated at end
-                total_questions: questions.length,
-                week_id: null // Mixed quiz has no specific week
-              })
-              .select('id')
-              .single();
-              
-            if (attemptError) {
-              console.error("Error creating quiz attempt:", attemptError);
-              return;
-            }
-            
-            attemptId = attemptData.id;
-            localStorage.setItem('currentMixedQuizAttemptId', attemptId);
-          }
-          
-          await supabase.from('incorrect_answers').insert({
-            user_id: user.id,
-            week_id: currentQuestion.week_id,
-            question_text: currentQuestion.text,
-            user_answer: selectedOption,
-            correct_answer: currentQuestion.correctAnswer,
-            attempt_id: attemptId
-          });
-        } catch (error) {
-          console.error("Error saving incorrect answer:", error);
-        }
-      }
     }
-    
-    setIsAnswered(true);
   };
-  
+
   const handleNextQuestion = () => {
     if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
-      setSelectedOption(null);
-      setIsAnswered(false);
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else {
       setQuizCompleted(true);
-      // Save quiz attempt to Supabase if user is logged in
-      if (user) {
-        saveQuizAttempt();
-      }
+      saveQuizResults();
     }
   };
-  
-  const saveQuizAttempt = async () => {
+
+  const handlePrevQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
+    }
+  };
+
+  const saveQuizResults = async () => {
+    if (!user) return;
+
     try {
-      const attemptId = localStorage.getItem('currentMixedQuizAttemptId');
-      
-      if (attemptId) {
-        // Update existing attempt with final score
-        await supabase.from('quiz_attempts').update({
-          score: score,
-        }).eq('id', attemptId);
-      } else {
-        // Create new attempt
-        await supabase.from('quiz_attempts').insert({
-          user_id: user!.id,
+      // Save quiz attempt
+      const { data: attemptData, error: attemptError } = await supabase
+        .from('quiz_attempts')
+        .insert({
+          user_id: user.id,
           quiz_type: 'mixed',
           score: score,
           total_questions: questions.length
-        });
+        })
+        .select();
+
+      if (attemptError) throw attemptError;
+
+      // Save incorrect answers if any
+      if (incorrectAnswers.length > 0 && attemptData && attemptData[0]) {
+        const incorrectAnswersToSave = incorrectAnswers.map(item => ({
+          attempt_id: attemptData[0].id,
+          user_id: user.id,
+          question_text: item.question,
+          correct_answer: item.correctAnswer,
+          user_answer: item.userAnswer
+        }));
+
+        const { error: incorrectError } = await supabase
+          .from('incorrect_answers')
+          .insert(incorrectAnswersToSave);
+
+        if (incorrectError) throw incorrectError;
       }
-      
-      // Clear stored attempt ID
-      localStorage.removeItem('currentMixedQuizAttemptId');
-    } catch (error) {
-      console.error("Error saving quiz attempt:", error);
+
+      toast({
+        title: "Progress saved",
+        description: "Your quiz results have been saved to your profile.",
+      });
+
+    } catch (error: any) {
+      console.error('Error saving quiz results:', error);
+      toast({
+        title: "Error saving progress",
+        description: "There was an error saving your quiz results.",
+        variant: "destructive"
+      });
     }
   };
-  
-  const handleStartQuiz = () => {
-    setQuizStarted(true);
-    setLoading(true);
+
+  const restartQuiz = () => {
     setCurrentQuestionIndex(0);
     setSelectedOption(null);
-    setIsAnswered(false);
+    setIsChecking(false);
     setScore(0);
     setQuizCompleted(false);
     setIncorrectAnswers([]);
-    // Clear any previous attempt ID
-    localStorage.removeItem('currentMixedQuizAttemptId');
   };
-  
-  const handleRestart = () => {
-    setQuizStarted(false);
-    setQuizCompleted(false);
-  };
-  
-  if (loading) {
+
+  if (quizCompleted) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-conservation-water"></div>
+      <div className="nptel-container py-8">
+        <Card className="max-w-3xl mx-auto">
+          <CardHeader className="text-center bg-conservation-green/10">
+            <CardTitle>Mixed Quiz Completed!</CardTitle>
+            <CardDescription>Mixed Questions from Various Weeks</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center space-y-6">
+              <CheckCircle className="h-16 w-16 text-conservation-green" />
+              <h2 className="text-2xl font-semibold">Your Score: {score}/{questions.length}</h2>
+              <p className="text-lg">
+                {score === questions.length ? 
+                  "Perfect! You've mastered these questions." : 
+                  score >= questions.length / 2 ? 
+                    "Good job! Keep studying to improve your score." : 
+                    "Keep practicing. Review the questions you missed."}
+              </p>
+              
+              {incorrectAnswers.length > 0 && (
+                <div className="w-full mt-6">
+                  <h3 className="text-lg font-medium mb-4">Questions to Review:</h3>
+                  <div className="space-y-4">
+                    {incorrectAnswers.map((item, index) => (
+                      <div key={index} className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                        <p className="font-medium">{item.question}</p>
+                        <p className="text-sm mt-2">Your answer: <span className="text-red-600 dark:text-red-400">{item.userAnswer}</span></p>
+                        <p className="text-sm">Correct answer: <span className="text-green-600 dark:text-green-400">{item.correctAnswer}</span></p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+          <CardFooter className="flex flex-col space-y-4">
+            <div className="flex flex-col sm:flex-row justify-between gap-4 w-full">
+              <Button asChild variant="outline" className="w-full sm:w-auto">
+                <Link to="/learn">Return to Learning</Link>
+              </Button>
+              <Button onClick={restartQuiz} className="flex items-center space-x-2 w-full sm:w-auto">
+                <RefreshCcw className="h-4 w-4" />
+                <span>Restart Quiz</span>
+              </Button>
+              <Button asChild className="w-full sm:w-auto">
+                <Link to="/quiz/mixed">Mixed Quizzes</Link>
+              </Button>
+            </div>
+            
+            {/* Follow Aman Section */}
+            <div className="w-full flex flex-col items-center mt-6 pt-4 border-t">
+              <h3 className="text-lg font-semibold mb-4">Follow Aman</h3>
+              <div className="flex space-x-4">
+                <a 
+                  href="https://www.linkedin.com/in/aman-chauhan-128552256" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="hover:text-blue-600 transition-colors"
+                >
+                  <Linkedin size={32} />
+                </a>
+                <a 
+                  href="https://github.com/amanchauhan786" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="hover:text-gray-600 transition-colors"
+                >
+                  <Github size={32} />
+                </a>
+              </div>
+            </div>
+          </CardFooter>
+        </Card>
       </div>
     );
   }
-  
-  if (!quizStarted) {
-    return (
-      <Card className="max-w-3xl mx-auto mt-4">
-        <CardHeader className="bg-conservation-water/10">
-          <CardTitle>Mixed Quiz</CardTitle>
-          <CardDescription>Test your knowledge with questions from all weeks</CardDescription>
-        </CardHeader>
-        <CardContent className="pt-6 space-y-6">
-          <div>
-            <h3 className="text-lg font-medium mb-2">Number of Questions</h3>
-            <div className="space-y-3">
-              <Slider
-                value={[numberOfQuestions]}
-                onValueChange={(value) => setNumberOfQuestions(value[0])}
-                min={5}
-                max={20}
-                step={5}
-                className="w-full"
-              />
-              <div className="flex justify-between">
-                <span>5</span>
-                <span>10</span>
-                <span>15</span>
-                <span>20</span>
-              </div>
-              <p className="text-center font-medium mt-2">Selected: {numberOfQuestions} questions</p>
-            </div>
-          </div>
-          
-          <div className="flex justify-center mt-6">
-            <Button 
-              onClick={handleStartQuiz} 
-              size="lg"
-              className="w-full sm:w-auto"
-            >
-              Start Quiz
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-  
-  if (quizCompleted) {
-    const percentage = Math.round((score / questions.length) * 100);
-    const passingScore = Math.ceil(questions.length * 0.6);
-    const passed = score >= passingScore;
-    
-    return (
-      <Card className="max-w-3xl mx-auto mt-4">
-        <CardHeader className={passed ? "bg-green-100 dark:bg-green-900/20" : "bg-amber-100 dark:bg-amber-900/20"}>
-          <CardTitle className="flex items-center gap-2">
-            <Trophy className="h-6 w-6 text-conservation-water" />
-            Quiz Results
-          </CardTitle>
-          <CardDescription>Mixed Quiz - Questions from all weeks</CardDescription>
+
+  return (
+    <div className="nptel-container py-8">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+        <h1 className="text-xl md:text-2xl font-bold text-center sm:text-left">Mixed Quiz</h1>
+        <Button asChild variant="outline">
+          <Link to="/quiz/mixed">Back to Quizzes</Link>
+        </Button>
+      </div>
+
+      <div className="mb-6">
+        <div className="flex justify-between text-sm mb-2">
+          <span>Question {currentQuestionIndex + 1} of {questions.length}</span>
+          <span>Score: {score}/{currentQuestionIndex + (isChecking ? 1 : 0)}</span>
+        </div>
+        <Progress value={progress} className="h-2" />
+      </div>
+
+      <Card className="mb-6">
+        <CardHeader className="bg-conservation-green/10">
+          <CardTitle>Question {currentQuestionIndex + 1}</CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
-          <div className="text-center mb-6">
-            <div className="text-3xl font-bold mb-2">
-              {score} / {questions.length}
-            </div>
-            <Progress value={percentage} className="h-3" />
-            <p className="mt-2 text-sm text-muted-foreground">You scored {percentage}%</p>
-          </div>
-          
-          <div className="mb-8">
-            {passed ? (
-              <div className="p-4 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-100 text-center">
-                <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-2" />
-                <h3 className="text-lg font-semibold mb-1">Well Done!</h3>
-                <p>You've passed the quiz with a good score.</p>
-              </div>
-            ) : (
-              <div className="p-4 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-100 text-center">
-                <XCircle className="h-12 w-12 text-amber-500 mx-auto mb-2" />
-                <h3 className="text-lg font-semibold mb-1">Keep Learning</h3>
-                <p>You need {passingScore} correct answers to pass. Review the materials and try again.</p>
-              </div>
-            )}
-          </div>
-          
-          {incorrectAnswers.length > 0 && (
-            <div className="mb-8">
-              <h3 className="text-lg font-semibold mb-4">Questions to Review</h3>
-              <div className="space-y-4">
-                {incorrectAnswers.map((item, index) => (
-                  <div key={index} className="p-4 bg-red-50 dark:bg-red-900/10 rounded-lg border border-red-100">
-                    <div className="flex items-start gap-2">
-                      <Badge variant="outline" className="mt-1">Week {item.question.week_id}</Badge>
-                      <div>
-                        <p className="font-medium mb-2">{item.question.text}</p>
-                        <p className="text-sm text-red-600">Your answer: {item.userAnswer}</p>
-                        <p className="text-sm text-green-600">Correct answer: {item.question.correctAnswer}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          <div className="flex flex-col sm:flex-row justify-center gap-4 mt-6">
-            <Button 
-              variant="outline" 
-              onClick={handleRestart}
-              className="flex items-center gap-2"
-            >
-              <RotateCcw className="h-4 w-4" />
-              Try Again
-            </Button>
-            
-            <Button 
-              onClick={() => navigate('/')}
-              className="flex items-center gap-2"
-            >
-              <ChevronRight className="h-4 w-4" />
-              Back to Dashboard
-            </Button>
-          </div>
-          
-          <div className="text-center mt-8 pt-4 border-t">
-            <p className="text-sm text-muted-foreground mb-2">Follow Aman on</p>
-            <div className="flex justify-center space-x-4">
-              <a 
-                href="https://www.linkedin.com/in/aman-chauhan-128552256" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-blue-500 hover:text-blue-700 transition-colors"
-              >
-                <Linkedin size={20} />
-              </a>
-              <a 
-                href="https://github.com/amanchauhan786" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors"
-              >
-                <Github size={20} />
-              </a>
-            </div>
+          <p className="text-lg mb-6">{currentQuestion.text}</p>
+
+          <div className="space-y-3">
+            {currentQuestion.options.map((option, index) => (
+              <QuizOption
+                key={index}
+                option={option}
+                selected={selectedOption === option}
+                isCorrect={isChecking ? option === currentQuestion.correctAnswer : null}
+                isChecking={isChecking}
+                onSelect={() => handleOptionSelect(option)}
+              />
+            ))}
           </div>
         </CardContent>
-      </Card>
-    );
-  }
-  
-  // Add a guard clause to prevent rendering when currentQuestion is undefined
-  if (!currentQuestion) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64">
-        <p className="text-lg text-muted-foreground mb-4">No questions available for this quiz.</p>
-        <Button onClick={handleRestart}>Go Back</Button>
-      </div>
-    );
-  }
-  
-  return (
-    <Card className="max-w-3xl mx-auto mt-4">
-      <CardHeader className="bg-conservation-water/10">
-        <div className="flex justify-between items-start mb-2">
-          <Badge variant="outline">Mixed Quiz</Badge>
-          <Badge>Question {currentQuestionIndex + 1} of {questions.length}</Badge>
-        </div>
-        <CardTitle>
-          {currentQuestion.text}
-        </CardTitle>
-        <CardDescription>
-          From Week {currentQuestion.week_id}: {weeks.find(w => w.id === currentQuestion.week_id)?.title}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="pt-6">
-        <div className="space-y-3">
-          {currentQuestion.options.map((option, index) => (
-            <QuizOption
-              key={index}
-              option={option}
-              selected={selectedOption === option}
-              isCorrect={isAnswered ? option === currentQuestion.correctAnswer : null}
-              isChecking={isAnswered}
-              onSelect={() => handleOptionSelect(option)}
-            />
-          ))}
-        </div>
-        
-        <div className="mt-8 flex justify-end">
-          {!isAnswered ? (
-            <Button 
-              onClick={handleCheckAnswer} 
+        <CardFooter className="flex flex-col sm:flex-row justify-between gap-4">
+          <Button
+            variant="outline"
+            onClick={handlePrevQuestion}
+            disabled={currentQuestionIndex === 0}
+            className="flex items-center space-x-2 w-full sm:w-auto"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Previous</span>
+          </Button>
+
+          {!isChecking ? (
+            <Button
+              onClick={handleCheckAnswer}
               disabled={!selectedOption}
-              className="min-w-32"
+              className="w-full sm:w-auto"
             >
               Check Answer
             </Button>
           ) : (
-            <Button 
+            <Button
               onClick={handleNextQuestion}
-              className="min-w-32"
+              className="flex items-center space-x-2 w-full sm:w-auto"
             >
-              {currentQuestionIndex < questions.length - 1 ? 'Next Question' : 'See Results'}
+              <span>{currentQuestionIndex < questions.length - 1 ? 'Next' : 'Finish Quiz'}</span>
+              <ArrowRight className="h-4 w-4" />
             </Button>
           )}
-        </div>
-      </CardContent>
-    </Card>
+        </CardFooter>
+      </Card>
+    </div>
   );
 };
 
