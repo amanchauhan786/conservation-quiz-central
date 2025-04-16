@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,18 +12,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from './AuthProvider';
 import { weeks } from '@/data/weekData';
 import { Question } from '@/types';
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const MixedQuiz = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
 
+  const [allQuestions, setAllQuestions] = useState<Question[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [score, setScore] = useState(0);
   const [quizCompleted, setQuizCompleted] = useState(false);
+  const [quizStarted, setQuizStarted] = useState(false);
+  const [questionsCount, setQuestionsCount] = useState(10);
   const [incorrectAnswers, setIncorrectAnswers] = useState<Array<{
     question: string;
     correctAnswer: string;
@@ -30,36 +36,95 @@ const MixedQuiz = () => {
   }>>([]);
 
   const currentQuestion = questions[currentQuestionIndex];
-  const progress = questions ? ((currentQuestionIndex + 1) / questions.length) * 100 : 0;
+  const progress = questions.length > 0 ? ((currentQuestionIndex + 1) / questions.length) * 100 : 0;
 
+  // Load all available questions
   useEffect(() => {
-    const allQuestions: Question[] = [];
+    const loadQuestions: Question[] = [];
+    
     weeks.forEach(week => {
-      allQuestions.push(...week.questions);
+      if (week.questions && Array.isArray(week.questions)) {
+        // Add weekId to each question
+        const questionsWithWeekId = week.questions.map(q => ({
+          ...q,
+          weekId: week.id
+        }));
+        loadQuestions.push(...questionsWithWeekId);
+      }
     });
 
-    // Shuffle questions
-    const shuffledQuestions = allQuestions.sort(() => Math.random() - 0.5);
-    setQuestions(shuffledQuestions);
+    // Ensure we have questions
+    if (loadQuestions.length === 0) {
+      // Fallback questions if no questions are available
+      const fallbackQuestions: Question[] = [
+        {
+          text: "What does HTML stand for?",
+          options: ["Hyper Text Markup Language", "High Tech Multi Language", "Hyper Transfer Markup Language", "Home Tool Markup Language"],
+          correctAnswer: "Hyper Text Markup Language",
+          weekId: 1
+        },
+        {
+          text: "Which tag is used to create a hyperlink in HTML?",
+          options: ["<link>", "<a>", "<href>", "<url>"],
+          correctAnswer: "<a>",
+          weekId: 1
+        },
+        {
+          text: "What is the correct CSS syntax for making all the paragraphs bold?",
+          options: ["p {text-weight: bold;}", "p {font-weight: bold;}", "p.all {font-weight: bold;}", "<p style='font-weight: bold;'>"],
+          correctAnswer: "p {font-weight: bold;}",
+          weekId: 2
+        },
+        {
+          text: "What does CSS stand for?",
+          options: ["Cascading Style Sheets", "Creative Style Sheets", "Computer Style Sheets", "Colorful Style Sheets"],
+          correctAnswer: "Cascading Style Sheets",
+          weekId: 2
+        },
+        {
+          text: "Which JavaScript method is used to access an HTML element by id?",
+          options: ["getElementById()", "getElement(id)", "getElementsById()", "elementById()"],
+          correctAnswer: "getElementById()",
+          weekId: 3
+        }
+      ];
+      setAllQuestions(fallbackQuestions);
+    } else {
+      setAllQuestions(loadQuestions);
+    }
   }, []);
 
+  // Reset state when moving to new question
   useEffect(() => {
-    // Reset state when moving to new question
-    setSelectedOption(null);
-    setIsChecking(false);
-  }, [currentQuestionIndex]);
+    if (quizStarted && currentQuestion) {
+      setSelectedOption(null);
+      setIsChecking(false);
+    }
+  }, [currentQuestionIndex, quizStarted, currentQuestion]);
 
-  if (!currentQuestion) {
-    return null;
-  }
+  const handleStartQuiz = () => {
+    // Ensure questions count is within reasonable limits
+    const count = Math.min(Math.max(1, questionsCount), allQuestions.length);
+    
+    // Shuffle and select requested number of questions
+    const shuffledQuestions = [...allQuestions].sort(() => Math.random() - 0.5);
+    setQuestions(shuffledQuestions.slice(0, count));
+    
+    // Reset quiz state
+    setCurrentQuestionIndex(0);
+    setScore(0);
+    setIncorrectAnswers([]);
+    setQuizStarted(true);
+    setQuizCompleted(false);
+  };
 
   const handleOptionSelect = (option: string) => {
-    if (isChecking) return;
+    if (isChecking || !currentQuestion) return;
     setSelectedOption(option);
   };
 
   const handleCheckAnswer = () => {
-    if (!selectedOption) return;
+    if (!selectedOption || !currentQuestion) return;
 
     setIsChecking(true);
 
@@ -114,7 +179,8 @@ const MixedQuiz = () => {
           user_id: user.id,
           question_text: item.question,
           correct_answer: item.correctAnswer,
-          user_answer: item.userAnswer
+          user_answer: item.userAnswer,
+          week_id: 0 // Default week_id for mixed quiz
         }));
 
         const { error: incorrectError } = await supabase
@@ -140,6 +206,7 @@ const MixedQuiz = () => {
   };
 
   const restartQuiz = () => {
+    setQuizStarted(false);
     setCurrentQuestionIndex(0);
     setSelectedOption(null);
     setIsChecking(false);
@@ -221,6 +288,78 @@ const MixedQuiz = () => {
               </div>
             </div>
           </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!quizStarted) {
+    return (
+      <div className="nptel-container py-8">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+          <h1 className="text-xl md:text-2xl font-bold text-center sm:text-left">Mixed Quiz Challenge</h1>
+          <Button asChild variant="outline">
+            <Link to="/quiz/mixed">Back to Quizzes</Link>
+          </Button>
+        </div>
+
+        <Card className="max-w-3xl mx-auto">
+          <CardHeader className="bg-conservation-green/10">
+            <CardTitle>Choose Your Challenge</CardTitle>
+            <CardDescription>Select how many questions you want to answer</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="questions-count">Number of Questions:</Label>
+                <Input
+                  id="questions-count"
+                  type="number"
+                  min="1"
+                  max={allQuestions.length}
+                  value={questionsCount}
+                  onChange={(e) => setQuestionsCount(Math.min(Math.max(1, parseInt(e.target.value) || 1), allQuestions.length))}
+                  className="w-full"
+                />
+                <p className="text-sm text-muted-foreground">
+                  Available questions: {allQuestions.length}
+                </p>
+              </div>
+
+              <div className="bg-amber-50 dark:bg-amber-950/30 p-4 rounded-md">
+                <h3 className="font-medium text-amber-800 dark:text-amber-300 mb-2">Challenge Info</h3>
+                <p className="text-sm">
+                  This quiz will randomly select {questionsCount} questions from all available weeks. 
+                  Test your knowledge across different topics!
+                </p>
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-end">
+            <Button 
+              onClick={handleStartQuiz}
+              disabled={allQuestions.length === 0}
+              className="flex items-center gap-2"
+            >
+              Start Challenge
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!currentQuestion) {
+    return (
+      <div className="nptel-container py-8">
+        <Card className="max-w-3xl mx-auto">
+          <CardContent className="pt-6">
+            <p className="text-center">No questions available. Please try again later.</p>
+            <div className="flex justify-center mt-4">
+              <Button onClick={restartQuiz}>Back to Quiz Selection</Button>
+            </div>
+          </CardContent>
         </Card>
       </div>
     );
