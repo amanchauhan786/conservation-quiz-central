@@ -57,7 +57,41 @@ const WeeklyLearning = () => {
                 <CardDescription>{week.description}</CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
-                <div className="prose max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: week.content.content }} />
+                <div className="prose max-w-none dark:prose-invert">
+                  {week.id === 12 ? (
+                    <div>
+                      <h3>Conservation Terminology and Ecosystem Services</h3>
+                      <p>This week focuses on understanding key conservation terms, wildlife acts, and the classification of ecosystem services.</p>
+                      
+                      <h4>Key Terms from Wildlife Protection Act 1972</h4>
+                      <p>According to the Wildlife Protection Act 1972 (WPA 1972), wildlife includes any animal, aquatic or land vegetation which forms part of any habitat.</p>
+                      
+                      <h4>Species Classification</h4>
+                      <ul>
+                        <li><strong>Keystone Species:</strong> Species that have a disproportionately large effect on their environment relative to their abundance, such as the fig tree that bears fruits when food is scarce for animals.</li>
+                        <li><strong>Flagship Species:</strong> Charismatic species that serve as symbols for conservation efforts, like the orchids at Sessa orchid sanctuary in Arunachal Pradesh.</li>
+                        <li><strong>Umbrella Species:</strong> Species whose conservation indirectly protects many other species, such as tigers and elephants that require large territories.</li>
+                      </ul>
+                      
+                      <h4>Conservation Approaches</h4>
+                      <ul>
+                        <li><strong>In-situ Conservation:</strong> Protection of species in their natural habitats.</li>
+                        <li><strong>Ex-situ Conservation:</strong> Protection of species outside their natural habitats, such as zoos.</li>
+                        <li><strong>Conservation Reserves:</strong> Areas with lower threat levels where conservation efforts can be implemented effectively.</li>
+                      </ul>
+                      
+                      <h4>Ecosystem Services</h4>
+                      <ul>
+                        <li><strong>Supporting Services:</strong> Services that are necessary for the production of all other ecosystem services, such as soil formation and nutrient cycling.</li>
+                        <li><strong>Regulating Services:</strong> Benefits obtained from the regulation of ecosystem processes, such as biological control of pest populations.</li>
+                        <li><strong>Provisioning Services:</strong> Products obtained from ecosystems, such as food, water, and timber.</li>
+                        <li><strong>Cultural Services:</strong> Non-material benefits obtained from ecosystems, such as recreation, spiritual enrichment, and aesthetic experiences.</li>
+                      </ul>
+                    </div>
+                  ) : (
+                    <p>Content for Week {week.id} will be available soon.</p>
+                  )}
+                </div>
                 
                 <div className="mt-8 flex flex-col sm:flex-row justify-between gap-4">
                   <Button 

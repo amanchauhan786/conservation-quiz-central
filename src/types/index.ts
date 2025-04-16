@@ -16,10 +16,13 @@ export interface Question {
   weekId?: number;
 }
 
-// Export Week interface if it doesn't exist already
+// Export Week interface
 export interface Week {
   id: number;
   title: string;
   description: string;
   questions: Question[];
+  content?: {
+    content: string;
+  };
 }
