@@ -9,17 +9,9 @@ export interface IncorrectAnswer {
 
 // Define types for questions
 export interface Question {
-  id?: number;
+  id?: number | string;
   text: string;
   options: string[];
   correctAnswer: string;
   weekId?: number;
-}
-
-// Export Week interface if it doesn't exist already
-export interface Week {
-  id: number;
-  title: string;
-  description: string;
-  questions: Question[];
 }

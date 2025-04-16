@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import { Award, Book, BarChart2, CheckCircle, Activity, AlertCircle, Users } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -294,7 +295,7 @@ const DashboardOverview = () => {
               </Card>
             </div>
             
-            {/* New section: Mixed Quiz before Areas to Improve */}
+            {/* Quiz Distribution section */}
             {quizDistribution.length > 0 && (
               <Card className="mb-8">
                 <CardHeader>
@@ -330,7 +331,56 @@ const DashboardOverview = () => {
               </Card>
             )}
             
-            {/* Areas to Improve section comes after Mixed Quiz Distribution */}
+            {/* Conservation Economics and Course Options Section */}
+            <div className="bg-white dark:bg-card rounded-lg shadow-md p-6 mb-8 animate-fade-in">
+              <h2 className="text-2xl font-semibold mb-4">Conservation Economics</h2>
+              <p className="mb-4">
+                The times are changing: we live in an era when issues such as climate change, over population, pollution, habitat loss and 
+                mass extinction of species are no longer just academic concepts; we are witnessing them in our daily lives and suffering their consequences.
+              </p>
+              <p className="mb-4">
+                In this course, we shall look at the processes of Conventional Economics that have led to the destruction of the 
+                environment by putting profits above everything, and how we can solve these issues of Conventional Economics with a 
+                better understanding of Economics – Green Economics.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <Card>
+                <CardHeader className="bg-conservation-green/10">
+                  <CardTitle>Weekly Learning</CardTitle>
+                  <CardDescription>Study materials for each week</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <p className="mb-4">Access comprehensive learning materials organized by week, including explanations of key concepts.</p>
+                  <Link to="/learn" className="text-conservation-green hover:text-conservation-green-dark font-medium">Start Learning →</Link>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="bg-conservation-earth/10">
+                  <CardTitle>Weekly Quizzes</CardTitle>
+                  <CardDescription>Test your knowledge by week</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <p className="mb-4">Assess your understanding with topic-specific quizzes for each week of the course.</p>
+                  <Link to="/quiz/weekly" className="text-conservation-earth hover:text-conservation-earth-dark font-medium">Take Weekly Quizzes →</Link>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="bg-conservation-water/10">
+                  <CardTitle>Mixed Quiz</CardTitle>
+                  <CardDescription>Comprehensive assessment</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <p className="mb-4">Challenge yourself with questions from all weeks combined in a comprehensive test.</p>
+                  <Link to="/quiz/mixed" className="text-conservation-water hover:text-conservation-water-dark font-medium">Take Mixed Quiz →</Link>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Areas to Improve section */}
             <IncorrectAnswersHistory />
           </>
         )}
@@ -354,54 +404,6 @@ const DashboardOverview = () => {
       ) : (
         renderDashboard()
       )}
-      
-      <div className="bg-white dark:bg-card rounded-lg shadow-md p-6 mb-8 animate-fade-in">
-        <h2 className="text-2xl font-semibold mb-4">Conservation Economics</h2>
-        <p className="mb-4">
-          The times are changing: we live in an era when issues such as climate change, over population, pollution, habitat loss and 
-          mass extinction of species are no longer just academic concepts; we are witnessing them in our daily lives and suffering their consequences.
-        </p>
-        <p className="mb-4">
-          In this course, we shall look at the processes of Conventional Economics that have led to the destruction of the 
-          environment by putting profits above everything, and how we can solve these issues of Conventional Economics with a 
-          better understanding of Economics – Green Economics.
-        </p>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="bg-conservation-green/10">
-            <CardTitle>Weekly Learning</CardTitle>
-            <CardDescription>Study materials for each week</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <p className="mb-4">Access comprehensive learning materials organized by week, including explanations of key concepts.</p>
-            <Link to="/learn" className="text-conservation-green hover:text-conservation-green-dark font-medium">Start Learning →</Link>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="bg-conservation-earth/10">
-            <CardTitle>Weekly Quizzes</CardTitle>
-            <CardDescription>Test your knowledge by week</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <p className="mb-4">Assess your understanding with topic-specific quizzes for each week of the course.</p>
-            <Link to="/quiz/weekly" className="text-conservation-earth hover:text-conservation-earth-dark font-medium">Take Weekly Quizzes →</Link>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="bg-conservation-water/10">
-            <CardTitle>Mixed Quiz</CardTitle>
-            <CardDescription>Comprehensive assessment</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <p className="mb-4">Challenge yourself with questions from all weeks combined in a comprehensive test.</p>
-            <Link to="/quiz/mixed" className="text-conservation-water hover:text-conservation-water-dark font-medium">Take Mixed Quiz →</Link>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 };
