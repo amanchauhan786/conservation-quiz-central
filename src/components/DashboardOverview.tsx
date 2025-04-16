@@ -294,7 +294,9 @@ const DashboardOverview = () => {
               </Card>
             </div>
             
-            {/* New section: Mixed Quiz before Areas to Improve */}
+            {/* Areas to Improve section - Now placed on the dashboard */}
+            <IncorrectAnswersHistory />
+            
             {quizDistribution.length > 0 && (
               <Card className="mb-8">
                 <CardHeader>
@@ -329,9 +331,6 @@ const DashboardOverview = () => {
                 </CardContent>
               </Card>
             )}
-            
-            {/* Areas to Improve section comes after Mixed Quiz Distribution */}
-            <IncorrectAnswersHistory />
           </>
         )}
       </>
