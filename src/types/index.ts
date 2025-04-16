@@ -9,7 +9,7 @@ export interface IncorrectAnswer {
 
 // Define types for questions
 export interface Question {
-  id?: number;
+  id?: number | string;
   text: string;
   options: string[];
   correctAnswer: string;
