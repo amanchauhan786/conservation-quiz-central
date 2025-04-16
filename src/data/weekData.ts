@@ -2,7 +2,7 @@
 import { Week, Question } from '@/types';
 
 // Define week data
-const weeks: Week[] = [
+export const weeks: Week[] = [
   {
     id: 1,
     title: "Introduction to Environmental Science",
