@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from './AuthProvider';
 
 const WeeklyQuiz = () => {
+  
   const { weekId } = useParams<{ weekId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
