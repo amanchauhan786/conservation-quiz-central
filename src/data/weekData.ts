@@ -1418,26 +1418,110 @@ export const weeks: Week[] = [
       `
     }
   },
-  {
-    id: 12,
-    title: "Coming Soon",
-    description: "Future content on conservation economics",
-    questions: [],
-    content: {
-      id: 12,
-      title: "Coming Soon",
-      description: "Future content on conservation economics",
-      content: `
-        <h2 class="text-2xl font-bold mb-4">Week 12: Coming Soon</h2>
-        
-        <p class="mb-4">Additional content for Week 12 is currently being developed and will be available shortly.</p>
-        
-        <p class="mb-4">In the meantime, you can review the materials from previous weeks or take the mixed test to practice your knowledge across all topics covered so far.</p>
-        
-        <p class="font-semibold">Check back soon for updates!</p>
-      `
+{
+  id: 12,
+  title: "Conservation Economics and Wildlife Protection",
+  description: "Understanding ecosystem services, conservation types, and species roles",
+  questions: [
+    {
+      id: "w12q1",
+      text: "As per Wildlife Protection Act 1972 (WPA 1972), wild life includes any animal, aquatic or land vegetation which forms part of any _____ .",
+      options: ["ecosystem", "state", "country", "habitat"],
+      correctAnswer: "habitat"
+    },
+    {
+      id: "w12q2",
+      text: "The tiger has a home range of several square kilometres, regulates the ecosystem through controlling herbivore populations and trophic cascades, and people come to tiger reserves to watch tigers. Thus, the tiger can be called as",
+      options: ["umbrella species", "keystone species", "flagship species", "all of the above"],
+      correctAnswer: "all of the above"
+    },
+    {
+      id: "w12q3",
+      text: "Soil formation is an example of",
+      options: ["provisioning service", "regulating service", "supporting service", "cultural service"],
+      correctAnswer: "supporting service"
+    },
+    {
+      id: "w12q4",
+      text: "Zoo is an example of",
+      options: ["in-situ conservation", "ex-situ conservation", "in-situ preservation", "ex-situ preservation"],
+      correctAnswer: "ex-situ conservation"
+    },
+    {
+      id: "w12q5",
+      text: "The fig tree bears fruits in times when animals do not have much access to food. In this context, it would be a good example of",
+      options: ["least concern species", "keystone species", "flagship species", "extinct species"],
+      correctAnswer: "keystone species"
+    },
+    {
+      id: "w12q6",
+      text: "Nutrient cycling is an example of",
+      options: ["provisioning service", "regulating service", "supporting service", "cultural service"],
+      correctAnswer: "supporting service"
+    },
+    {
+      id: "w12q7",
+      text: "People come to Sessa orchid sanctuary in Arunachal Pradesh to witness orchids, which in this context would be classified as",
+      options: ["umbrella species", "keystone species", "flagship species", "extinct species"],
+      correctAnswer: "flagship species"
+    },
+    {
+      id: "w12q8",
+      text: "We prefer those areas for the creation of a conservation reserve where the level of threat is",
+      options: ["very high", "medium", "very low", "non-existent"],
+      correctAnswer: "medium"
+    },
+    {
+      id: "w12q9",
+      text: "The elephant has a home range of several square kilometres, regulates the ecosystem by its habit of destructive feeding, and people can relate to this animal which is important for conservation. Given this background, the elephant can be called as",
+      options: ["umbrella species", "keystone species", "flagship species", "all of the above"],
+      correctAnswer: "all of the above"
+    },
+    {
+      id: "w12q10",
+      text: "Biological control of pest populations is an example of",
+      options: ["provisioning service", "regulating service", "supporting service", "cultural service"],
+      correctAnswer: "regulating service"
     }
+  ],
+  content: {
+    id: 12,
+    title: "Conservation Economics and Wildlife Protection",
+    description: "Understanding ecosystem services, conservation types, and species roles",
+    content: `
+      <h2 class="text-2xl font-bold mb-4">Week 12: Conservation Economics and Wildlife Protection</h2>
+
+      <p class="mb-4">This week covers the ecological and economic significance of biodiversity conservation and ecosystem services.</p>
+
+      <h3 class="text-xl font-semibold mb-3">Ecosystem Services</h3>
+      <ul class="list-disc pl-6 mb-4">
+        <li class="mb-2"><strong>Provisioning Services:</strong> Products obtained from ecosystems (e.g., food, water, timber).</li>
+        <li class="mb-2"><strong>Regulating Services:</strong> Benefits obtained from regulation of ecosystem processes (e.g., biological pest control).</li>
+        <li class="mb-2"><strong>Supporting Services:</strong> Services necessary for the production of all other services (e.g., soil formation, nutrient cycling).</li>
+        <li class="mb-2"><strong>Cultural Services:</strong> Non-material benefits (e.g., spiritual, recreational, and aesthetic experiences).</li>
+      </ul>
+
+      <h3 class="text-xl font-semibold mb-3">Conservation Strategies</h3>
+      <ul class="list-disc pl-6 mb-4">
+        <li class="mb-2"><strong>In-situ Conservation:</strong> Conservation of species in their natural habitat (e.g., biosphere reserves).</li>
+        <li class="mb-2"><strong>Ex-situ Conservation:</strong> Conservation outside the natural habitat (e.g., zoos, botanical gardens).</li>
+        <li class="mb-2">Conservation reserves are ideally created in areas where the level of threat is <strong>medium</strong>.</li>
+      </ul>
+
+      <h3 class="text-xl font-semibold mb-3">Species Importance</h3>
+      <ul class="list-disc pl-6 mb-4">
+        <li class="mb-2"><strong>Keystone Species:</strong> Species that have a disproportionately large effect on their ecosystems (e.g., fig tree, elephant).</li>
+        <li class="mb-2"><strong>Flagship Species:</strong> Species used to represent an environmental cause or habitat (e.g., orchids, tiger, elephant).</li>
+        <li class="mb-2"><strong>Umbrella Species:</strong> Protecting them indirectly protects many other species (e.g., tiger, elephant).</li>
+      </ul>
+
+      <h3 class="text-xl font-semibold mb-3">Legal Framework</h3>
+      <p class="mb-4">As per the <strong>Wildlife Protection Act 1972</strong>, wild life includes any animal or plant (aquatic or terrestrial) that forms part of any <strong>habitat</strong>.</p>
+
+      <p class="font-semibold">Understanding these classifications helps in policy-making, planning conservation efforts, and ensuring ecosystem sustainability.</p>
+    `
   }
+}
 ];
 
 export default weeks;
