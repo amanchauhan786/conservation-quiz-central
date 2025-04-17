@@ -1,10 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight, CheckCircle, RefreshCcw } from 'lucide-react';
-import { Linkedin, Github } from 'lucide-react';
 import { getWeekbyId } from '@/data/weekData';
 import QuizOption from './QuizOption';
 import { useToast } from '@/hooks/use-toast';
@@ -187,42 +187,17 @@ const WeeklyQuiz = () => {
               )}
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <div className="flex flex-col sm:flex-row justify-between gap-4 w-full">
-              <Button asChild variant="outline" className="w-full sm:w-auto">
-                <Link to="/learn">Return to Learning</Link>
-              </Button>
-              <Button onClick={restartQuiz} className="flex items-center space-x-2 w-full sm:w-auto">
-                <RefreshCcw className="h-4 w-4" />
-                <span>Restart Quiz</span>
-              </Button>
-              <Button asChild className="w-full sm:w-auto">
-                <Link to="/quiz/weekly">All Quizzes</Link>
-              </Button>
-            </div>
-            
-            {/* Follow Aman Section */}
-            <div className="w-full flex flex-col items-center mt-6 pt-4 border-t">
-              <h3 className="text-lg font-semibold mb-4">Follow Aman</h3>
-              <div className="flex space-x-4">
-                <a 
-                  href="https://www.linkedin.com/in/aman-chauhan-128552256" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="hover:text-blue-600 transition-colors"
-                >
-                  <Linkedin size={32} />
-                </a>
-                <a 
-                  href="https://github.com/amanchauhan786" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="hover:text-gray-600 transition-colors"
-                >
-                  <Github size={32} />
-                </a>
-              </div>
-            </div>
+          <CardFooter className="flex flex-col sm:flex-row justify-between gap-4">
+            <Button asChild variant="outline" className="w-full sm:w-auto">
+              <Link to="/learn">Return to Learning</Link>
+            </Button>
+            <Button onClick={restartQuiz} className="flex items-center space-x-2 w-full sm:w-auto">
+              <RefreshCcw className="h-4 w-4" />
+              <span>Restart Quiz</span>
+            </Button>
+            <Button asChild className="w-full sm:w-auto">
+              <Link to="/quiz/weekly">All Quizzes</Link>
+            </Button>
           </CardFooter>
         </Card>
       </div>

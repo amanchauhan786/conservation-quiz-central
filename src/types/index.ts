@@ -6,12 +6,3 @@ export interface IncorrectAnswer {
   correct_answer: string;
   count: number;
 }
-
-// Define types for questions
-export interface Question {
-  id?: number;
-  text: string;
-  options: string[];
-  correctAnswer: string;
-  weekId?: number;
-}
