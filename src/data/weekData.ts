@@ -1,3 +1,4 @@
+
 import { Question } from "@/types";
 
 export interface Week {
@@ -512,3 +513,8 @@ export const weeks: Week[] = [
     ]
   }
 ];
+
+// Add the getWeekbyId function to find a week by its ID
+export const getWeekbyId = (weekId: number): Week | undefined => {
+  return weeks.find(week => week.id === weekId);
+};
