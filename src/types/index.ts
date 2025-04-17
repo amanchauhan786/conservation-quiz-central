@@ -15,14 +15,3 @@ export interface Question {
   correctAnswer: string;
   weekId?: number;
 }
-
-// Define Week interface
-export interface Week {
-  id: number;
-  title: string;
-  description: string;
-  content: {
-    content: string;
-  };
-  questions: Question[];
-}
