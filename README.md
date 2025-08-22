@@ -83,3 +83,4 @@ This project is open-source. You are free to use and modify it for personal or e
 We recommend adding an **MIT License** for wider contribution.
 
 ---
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
