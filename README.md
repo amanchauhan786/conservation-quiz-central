@@ -2,7 +2,7 @@
 
 ---
 
-# Conservation Quiz Central (3000+ visitors recommneded)
+# Conservation Quiz Central (3000+ visitors recommended)
 
 A fun and interactive quiz application designed to test and improve your knowledge about wildlife and environmental conservation. This project aims to raise awareness about important conservation issues in an engaging way.
 
