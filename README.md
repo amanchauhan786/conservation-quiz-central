@@ -1,73 +1,85 @@
-# Welcome to your Lovable project
+<img width="1867" height="849" alt="image" src="https://github.com/user-attachments/assets/0fd8a721-b1e6-477a-b0cb-67f3371775f3" />
 
-## Project info
+---
 
-**URL**: https://lovable.dev/projects/4514f9a5-1fc3-49c6-97cf-767e7fc8ce38
+# Conservation Quiz Central (3000+ visitors recommneded)
 
-## How can I edit this code?
+A fun and interactive quiz application designed to test and improve your knowledge about wildlife and environmental conservation. This project aims to raise awareness about important conservation issues in an engaging way.
 
-There are several ways of editing your application.
+#📢 Trusted by 3000+ students at VIT Vellore for practicing NPTEL quizzes.
 
-**Use Lovable**
+---
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/4514f9a5-1fc3-49c6-97cf-767e7fc8ce38) and start prompting.
+📋 **Table of Contents**
 
-Changes made via Lovable will be committed automatically to this repo.
+* Features
+* Tech Stack
+* How to Play
+* Project Structure
+* Future Ideas
+* License
 
-**Use your preferred IDE**
+---
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+✨ **Features**
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+* **Multiple-Choice Questions**: A series of engaging questions to test your conservation knowledge.
+* **Instant Feedback**: See immediately if your answer was correct or incorrect.
+* **Score Tracking**: Your final score is calculated and displayed at the end of the quiz.
+* **Clean & Responsive UI**: A simple and intuitive interface that works great on any device.
+* **Educational Content**: Learn interesting facts about wildlife and the environment as you play.
+* **Widely Used**: Over 3000+ VIT Vellore students have already used this for NPTEL practice sessions.
 
-Follow these steps:
+---
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+🛠️ **Tech Stack**
+This is a front-end project built with fundamental web technologies:
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+* **HTML5**: Structure and content of the quiz.
+* **CSS3**: Styling, layout, and responsive design.
+* **JavaScript**: Quiz logic, including question handling, scoring, and interactivity.
 
-# Step 3: Install the necessary dependencies.
-npm i
+---
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+🚀 **How to Play**
+Run it locally without any complex setup:
+
+```bash
+# Clone the repository
+git clone https://github.com/amanchauhan786/conservation-quiz-central.git
+
+# Navigate to the project directory
+cd conservation-quiz-central
 ```
 
-**Edit a file directly in GitHub**
+Open `index.html` in your browser:
+Simply double-click the file, or right-click and choose **Open with Browser**.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+---
 
-**Use GitHub Codespaces**
+📁 **Project Structure**
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```
+conservation-quiz-central/
+├── index.html       # The main HTML file for the quiz interface
+├── style.css        # The main stylesheet
+├── script.js        # Handles the core quiz logic
+└── questions.js     # Contains the array of quiz questions and answers
+```
 
-## What technologies are used for this project?
+---
 
-This project is built with:
+🔮 **Future Ideas**
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+* [ ] Add More Categories (e.g., Marine Life, Rainforests, Endangered Species)
+* [ ] Implement a Countdown Timer per question
+* [ ] Store High Scores with Browser Local Storage
+* [ ] Provide Explanations after each question
 
-## How can I deploy this project?
+---
 
-Simply open [Lovable](https://lovable.dev/projects/4514f9a5-1fc3-49c6-97cf-767e7fc8ce38) and click on Share -> Publish.
+📄 **License**
+This project is open-source. You are free to use and modify it for personal or educational purposes.
+We recommend adding an **MIT License** for wider contribution.
 
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+---
